@@ -5,6 +5,8 @@ import prisma from '@/lib/prisma';
 import jsPDF from 'jspdf';
 
 // GET /api/profile/report — Generate PDF report for the authenticated student
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
     try {
         const session = await getServerSession(authOptions);
