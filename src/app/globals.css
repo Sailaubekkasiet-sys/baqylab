@@ -1,0 +1,200 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@layer base {
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --bg-tertiary: #f1f5f9;
+    --bg-card: #ffffff;
+    --bg-elevated: #ffffff;
+
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-tertiary: #94a3b8;
+
+    --border-default: #e2e8f0;
+    --border-hover: #cbd5e1;
+
+    --brand-50: #eef2ff;
+    --brand-100: #e0e7ff;
+    --brand-500: #6366f1;
+    --brand-600: #4f46e5;
+    --brand-700: #4338ca;
+
+    --success: #10b981;
+    --warning: #f59e0b;
+    --error: #ef4444;
+    --info: #3b82f6;
+  }
+
+  .dark {
+    --bg-primary: #0b0f1a;
+    --bg-secondary: #111827;
+    --bg-tertiary: #1e293b;
+    --bg-card: #151c2c;
+    --bg-elevated: #1a2332;
+
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-tertiary: #64748b;
+
+    --border-default: #1e293b;
+    --border-hover: #334155;
+
+    --brand-50: #1e1b4b;
+    --brand-100: #312e81;
+    --brand-500: #818cf8;
+    --brand-600: #6366f1;
+    --brand-700: #4f46e5;
+
+    --success: #34d399;
+    --warning: #fbbf24;
+    --error: #f87171;
+    --info: #60a5fa;
+  }
+
+  * {
+    @apply border-[var(--border-default)];
+  }
+
+  body {
+    @apply font-sans antialiased;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+  }
+}
+
+@layer components {
+  /* Glassmorphism card */
+  .glass-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    @apply rounded-xl shadow-sm backdrop-blur-sm;
+  }
+
+  .dark .glass-card {
+    background: rgba(21, 28, 44, 0.8);
+    border-color: rgba(255, 255, 255, 0.06);
+    @apply shadow-lg shadow-black/10;
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-brand-500 to-purple-500 bg-clip-text text-transparent;
+  }
+
+  /* Glow effect */
+  .glow {
+    @apply shadow-lg shadow-brand-500/25;
+  }
+
+  /* Code block styling */
+  .code-block {
+    @apply font-mono text-sm rounded-lg p-4 overflow-x-auto;
+    background-color: var(--bg-tertiary);
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-hover);
+    @apply rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-tertiary);
+  }
+
+  /* Line comment badges */
+  .badge-error {
+    @apply bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400;
+  }
+  .badge-tip {
+    @apply bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400;
+  }
+  .badge-good {
+    @apply bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400;
+  }
+  .badge-think {
+    @apply bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400;
+  }
+
+  /* Skill radar colors */
+  .skill-beginner { @apply text-red-500; }
+  .skill-intermediate { @apply text-amber-500; }
+  .skill-advanced { @apply text-green-500; }
+  .skill-expert { @apply text-brand-500; }
+}
+
+@layer utilities {
+  .transition-theme {
+    @apply transition-colors duration-200 ease-in-out;
+  }
+
+  /* Accessibility Overrides */
+  .high-contrast {
+    /* Pure Black & High Contrast Yellow/White */
+    --bg-primary: #000000 !important;
+    --bg-secondary: #000000 !important;
+    --bg-tertiary: #000000 !important;
+    --bg-card: #000000 !important;
+    --bg-elevated: #000000 !important;
+
+    --text-primary: #FFFF00 !important;
+    --text-secondary: #FFFFFF !important;
+    --text-tertiary: #FFFF00 !important;
+
+    --border-default: #FFFF00 !important;
+    --border-hover: #FFFFFF !important;
+
+    --brand-50: #000000 !important;
+    --brand-100: #000000 !important;
+    --brand-500: #FFFF00 !important;
+    --brand-600: #FFFF00 !important;
+    --brand-700: #FFFF00 !important;
+
+    --success: #FFFF00 !important;
+    --warning: #FFFF00 !important;
+    --error: #FFFF00 !important;
+    --info: #FFFF00 !important;
+
+    filter: brightness(1.2);
+    font-family: sans-serif !important;
+    line-height: 1.7 !important;
+  }
+
+  .high-contrast * {
+    border-color: #FFFF00 !important;
+  }
+
+  .high-contrast a,
+  .high-contrast button,
+  .high-contrast input,
+  .high-contrast textarea,
+  .high-contrast select {
+    border: 3px solid #FFFF00 !important;
+  }
+
+  .reduced-motion *, 
+  .reduced-motion *::before, 
+  .reduced-motion *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Global Focus Styles for Accessibility */
+*:focus-visible {
+  outline: 4px solid orange !important;
+  outline-offset: 2px !important;
+}
