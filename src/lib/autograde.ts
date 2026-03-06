@@ -19,6 +19,9 @@ interface AutoGradeResult {
     error?: string;
 }
 
+const JDOODLE_CLIENT_ID = process.env.JDOODLE_CLIENT_ID;
+const JDOODLE_CLIENT_SECRET = process.env.JDOODLE_CLIENT_SECRET;
+
 /**
  * Run code against test cases and return results.
  * Supports Python and JavaScript.
@@ -33,14 +36,20 @@ export async function runAutoGrade(
         return { passed: 0, total: 0, results: [] };
     }
 
+    if (!JDOODLE_CLIENT_ID || !JDOODLE_CLIENT_SECRET) {
+        return {
+            passed: 0, total: testCases.length, results: [],
+            error: "JDoodle API keys are missing. Autograding requires JDOODLE_CLIENT_ID and JDOODLE_CLIENT_SECRET in .env"
+        }
+    }
+
     const results: AutoGradeResult['results'] = [];
     let passed = 0;
 
-    for (const tc of testCases) {
-        const fileId = randomUUID();
-        const extension = language === 'python' ? 'py' : 'js';
-        const filePath = join(tmpdir(), `autograde-${fileId}.${extension}`);
+    const jdoodleLang = language === 'python' ? 'python3' : 'nodejs';
+    const jdoodleVersion = language === 'python' ? '4' : '4';
 
+    for (const tc of testCases) {
         // Wrap code to read stdin and execute
         let wrappedCode = code;
         if (language === 'python') {
@@ -50,12 +59,25 @@ export async function runAutoGrade(
         }
 
         try {
-            await writeFile(filePath, wrappedCode, 'utf-8');
+            const response = await fetch('https://api.jdoodle.com/v1/execute', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    clientId: JDOODLE_CLIENT_ID,
+                    clientSecret: JDOODLE_CLIENT_SECRET,
+                    script: wrappedCode,
+                    language: jdoodleLang,
+                    versionIndex: jdoodleVersion
+                })
+            });
 
-            const command = language === 'python' ? `python3 ${filePath}` : `node ${filePath}`;
-            const { stdout } = await execAsync(command, { timeout: timeLimitMs });
+            const data = await response.json();
 
-            const actual = stdout.trim();
+            if (!response.ok || data.error) {
+                throw new Error(data.error || 'Execution failed on JDoodle');
+            }
+
+            const actual = (data.output || '').trim();
             const expected = tc.expectedOutput.trim();
             const isPassed = actual === expected;
 
@@ -71,11 +93,9 @@ export async function runAutoGrade(
             results.push({
                 input: tc.input,
                 expected: tc.expectedOutput.trim(),
-                actual: err.stderr || err.message || 'Execution error',
+                actual: err.message || 'Execution error',
                 passed: false,
             });
-        } finally {
-            await unlink(filePath).catch(() => { });
         }
     }
 
