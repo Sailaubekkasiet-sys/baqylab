@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { processSubmissionGamification } from '@/lib/gamification';
-import { runAutoGrade } from '@/lib/autograde';
 
 // POST /api/submissions – submit new version (student)
 export async function POST(request: Request) {
@@ -12,7 +11,7 @@ export async function POST(request: Request) {
         if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const userId = (session.user as any).id;
-        const { assignmentId, code, answerText, quizAnswers, attachments, fileName, selfChecks } = await request.json();
+        const { assignmentId, code, answerText, quizAnswers, attachments, fileName, selfChecks, autoResults } = await request.json();
 
         if (!assignmentId) {
             return NextResponse.json({ error: 'api.err.assignRequired' }, { status: 400 });
@@ -51,18 +50,7 @@ export async function POST(request: Request) {
 
         const version = (lastVersion?.version || 0) + 1;
 
-        // Auto-grade if test cases exist
-        let autoResults = null;
-        if (assignment.type === 'CODE' && code && assignment.testCases && assignment.testCases !== '[]') {
-            try {
-                const testCases = JSON.parse(assignment.testCases);
-                if (testCases.length > 0) {
-                    autoResults = await runAutoGrade(code, assignment.language, testCases, assignment.timeLimitMs || 5000);
-                }
-            } catch (e) {
-                console.error('Auto-grade error:', e);
-            }
-        }
+        // Auto-grade results are now computed client-side and passed via request body (autoResults param)
 
         // Create the submission
         const submission = await prisma.submissionVersion.create({

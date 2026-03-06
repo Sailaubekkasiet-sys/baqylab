@@ -16,6 +16,10 @@ const icons = {
     success: <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
 }
 
+import { usePython } from '@/hooks/usePython';
+import { runJavaScript } from '@/hooks/useJavaScript';
+import { runClientSideAutoGrade } from '@/utils/clientAutograde';
+
 export default function AssignmentDetailPage() {
     const { id: classId, aid } = useParams();
     const { data: session } = useSession();
@@ -53,6 +57,9 @@ export default function AssignmentDetailPage() {
     const [compareVersions, setCompareVersions] = useState<[number, number] | null>(null);
     const handleSubmitRef = useRef<(() => void) | null>(null);
 
+    // Intercept client hooks
+    const { run: runPython, isLoaded: isPythonLoaded, isLoading: isPythonLoading } = usePython();
+
     useEffect(() => {
         fetch(`/api/assignments/${aid}`)
             .then(r => r.json())
@@ -82,6 +89,7 @@ export default function AssignmentDetailPage() {
     const isSubmitReady = () => {
         if (requiredChecks.length > 0 && !allChecked) return false;
         if (type === 'CODE' && !code) return false;
+        if (type === 'CODE' && assignment.language === 'python' && !isPythonLoaded) return false; // Must wait for Pyodide
         if (type === 'TEXT' && !answerText) return false;
         if (type === 'QUIZ' && Object.keys(quizAnswers).length < parsedQuizData.length) return false;
         return true;
@@ -89,6 +97,19 @@ export default function AssignmentDetailPage() {
 
     const handleSubmit = async () => {
         setSubmitting(true);
+
+        let autoResults = null;
+        if (type === 'CODE' && code && assignment.testCases && assignment.testCases !== '[]') {
+            try {
+                const testCases = JSON.parse(assignment.testCases);
+                if (testCases.length > 0) {
+                    autoResults = await runClientSideAutoGrade(code, assignment.language, testCases, runPython, runJavaScript);
+                }
+            } catch (error) {
+                console.error('Client-side autograding failed:', error);
+            }
+        }
+
         const res = await fetch('/api/submissions', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -99,14 +120,16 @@ export default function AssignmentDetailPage() {
                 quizAnswers: type === 'QUIZ' ? JSON.stringify(quizAnswers) : undefined,
                 attachments,
                 selfChecks: checkedItems,
+                autoResults,
             }),
         });
         const data = await res.json();
         setSubmitting(false);
 
         // Show auto-grade results if available
-        if (data.autoResults) {
-            const { passed, total } = data.autoResults;
+        if (data.autoResults || autoResults) {
+            const resultsToUse = data.autoResults ? (typeof data.autoResults === 'string' ? JSON.parse(data.autoResults) : data.autoResults) : autoResults;
+            const { passed, total } = resultsToUse;
             alert(`${t('autograde.result')}: ${passed}/${total} ${t('autograde.passed')}`);
         }
         window.location.reload();

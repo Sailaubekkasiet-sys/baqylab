@@ -5,6 +5,9 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/components/I18nProvider';
 
+import { usePython } from '@/hooks/usePython';
+import { runJavaScript } from '@/hooks/useJavaScript';
+
 // A simple IDE-like code editor, reusing existing styling
 export default function SandboxPage() {
     const { t } = useI18n();
@@ -13,22 +16,29 @@ export default function SandboxPage() {
     const [output, setOutput] = useState('');
     const [running, setRunning] = useState(false);
 
+    // Python WASM hook
+    const { run: runPython, isLoaded: isPythonLoaded, isLoading: isPythonLoading } = usePython();
+
     const handleRun = async () => {
+        if (language === 'python' && !isPythonLoaded) {
+            setOutput('Python environment is still loading. Please wait...');
+            return;
+        }
+
         setRunning(true);
         setOutput(t('sandbox.running'));
 
         try {
-            // Note: This calls the same python execution endpoint used for assignments
-            // We just send the single file content 
-            const res = await fetch('/api/execute', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code, language }),
-            });
-            const data = await res.json();
-            setOutput(data.output || data.error || t('sandbox.noOutput'));
-        } catch (error) {
-            setOutput(t('sandbox.error'));
+            let result = '';
+            if (language === 'python') {
+                result = await runPython(code);
+            } else if (language === 'javascript') {
+                result = await runJavaScript(code);
+            }
+
+            setOutput(result || t('sandbox.noOutput'));
+        } catch (error: any) {
+            setOutput(error.message || t('sandbox.error'));
         } finally {
             setRunning(false);
         }
@@ -43,15 +53,23 @@ export default function SandboxPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    {language === 'python' && isPythonLoading && (
+                        <span className="text-xs text-amber-500 animate-pulse hidden sm:inline-block">Loading Python...</span>
+                    )}
                     <select
                         value={language}
                         onChange={(e) => setLanguage(e.target.value)}
                         className="rounded-lg border px-3 py-2 text-sm outline-none bg-[var(--bg-secondary)] border-[var(--border-default)] text-[var(--text-primary)]"
                     >
-                        <option value="python">Python 3</option>
-                        <option value="javascript">JavaScript</option>
+                        <option value="python">Python 3 (WASM)</option>
+                        <option value="javascript">JavaScript (IFrame)</option>
                     </select>
-                    <Button onClick={handleRun} loading={running} className="flex items-center gap-2">
+                    <Button
+                        onClick={handleRun}
+                        disabled={language === 'python' && !isPythonLoaded}
+                        loading={running}
+                        className="flex items-center gap-2"
+                    >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" /></svg>{t('sandbox.runBtn')}</Button>
                 </div>
             </div>
