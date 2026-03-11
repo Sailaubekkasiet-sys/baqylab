@@ -404,7 +404,17 @@ export default function AssignmentDetailPage() {
                                 {s.attachments && (
                                     <div className="mt-3">
                                         <h3 className="text-xs font-semibold mb-1" style={{ color: 'var(--text-tertiary)' }}>{t('assign.attachments')}</h3>
-                                        <a href={s.attachments} target="_blank" rel="noreferrer" className="text-sm text-brand-500 hover:underline break-all">{s.attachments}</a>
+                                        <div className="space-y-1">
+                                            {s.attachments.split(',').map((url: string, idx: number) => {
+                                                const trimmedUrl = url.trim();
+                                                const proxyUrl = trimmedUrl.includes('blob.vercel-storage') ? `/api/files?url=${encodeURIComponent(trimmedUrl)}` : trimmedUrl;
+                                                return (
+                                                    <div key={idx}>
+                                                        <a href={proxyUrl} target="_blank" rel="noreferrer" className="text-sm text-brand-500 hover:underline break-all">{trimmedUrl}</a>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 )}
 
@@ -636,9 +646,19 @@ export default function AssignmentDetailPage() {
                                             {gradingSubmission.attachments && (
                                                 <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border-default)' }}>
                                                     <h3 className="text-xs font-semibold mb-1" style={{ color: 'var(--text-tertiary)' }}>{t('assign.attachments')}</h3>
-                                                    <a href={gradingSubmission.attachments} target="_blank" rel="noreferrer" className="text-sm text-brand-500 hover:underline break-all">
-                                                        {gradingSubmission.attachments}
-                                                    </a>
+                                                    <div className="space-y-1">
+                                                        {gradingSubmission.attachments.split(',').map((url: string, idx: number) => {
+                                                            const trimmedUrl = url.trim();
+                                                            const proxyUrl = trimmedUrl.includes('blob.vercel-storage') ? `/api/files?url=${encodeURIComponent(trimmedUrl)}` : trimmedUrl;
+                                                            return (
+                                                                <div key={idx}>
+                                                                    <a href={proxyUrl} target="_blank" rel="noreferrer" className="text-sm text-brand-500 hover:underline break-all">
+                                                                        {trimmedUrl}
+                                                                    </a>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
                                                 </div>
                                             )}
 

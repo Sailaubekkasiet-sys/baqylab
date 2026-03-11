@@ -18,7 +18,7 @@ export async function POST(request: Request) {
         }
 
         const blob = await put(file.name, file, {
-            access: 'public',
+            access: 'private',
         });
 
         return NextResponse.json(blob);
