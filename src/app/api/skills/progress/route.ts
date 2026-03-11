@@ -13,11 +13,12 @@ export async function GET() {
 
         const userId = (session.user as any).id;
 
-        // Get all graded submissions for this student
-        const submissions = await prisma.submissionVersion.findMany({
+        // Get the latest graded submission per assignment for this student
+        const gradedSubmissions = await prisma.submissionVersion.findMany({
             where: { studentId: userId, status: 'graded' },
+            orderBy: { version: 'desc' },
             include: {
-                grades: { include: { criterion: true } },
+                grades: true,
                 assignment: {
                     include: {
                         skills: { include: { skill: true } },
@@ -27,13 +28,30 @@ export async function GET() {
             },
         });
 
+        // Keep only the latest version per assignment to prevent double counting
+        const latestSubmissionsMap = new Map<string, typeof gradedSubmissions[0]>();
+        for (const sub of gradedSubmissions) {
+            if (!latestSubmissionsMap.has(sub.assignmentId)) {
+                latestSubmissionsMap.set(sub.assignmentId, sub);
+            }
+        }
+        const submissions = Array.from(latestSubmissionsMap.values());
+
+        // Get actual user mastery from Phase 4 UserSkills
+        const userSkills = await (prisma as any).userSkill.findMany({
+            where: { userId },
+        });
+        const masteryMap = new Map(userSkills.map((us: any) => [us.skillId, us.mastery]));
+
         // Aggregate by skill
         const skillMap = new Map<string, {
+            id: string;
             name: string;
             color: string;
             totalPoints: number;
             maxPoints: number;
             assignments: Set<string>;
+            mastery: number;
         }>();
 
         for (const sub of submissions) {
@@ -44,11 +62,13 @@ export async function GET() {
                 const skill = as.skill;
                 if (!skillMap.has(skill.id)) {
                     skillMap.set(skill.id, {
+                        id: skill.id,
                         name: skill.name,
                         color: skill.color,
                         totalPoints: 0,
                         maxPoints: 0,
                         assignments: new Set(),
+                        mastery: (masteryMap.get(skill.id) as number) || 0,
                     });
                 }
                 const entry = skillMap.get(skill.id)!;
@@ -59,11 +79,12 @@ export async function GET() {
         }
 
         const skills = Array.from(skillMap.values()).map(s => ({
+            id: s.id,
             name: s.name,
             color: s.color,
             totalPoints: s.totalPoints,
             maxPoints: s.maxPoints,
-            percentage: s.maxPoints > 0 ? Math.round((s.totalPoints / s.maxPoints) * 100) : 0,
+            percentage: s.mastery, // Use the proper mastery value from DB
             assignmentCount: s.assignments.size,
         })).sort((a, b) => b.percentage - a.percentage);
 

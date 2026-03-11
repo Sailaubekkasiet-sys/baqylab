@@ -15,7 +15,7 @@ export async function GET(request: Request) {
 
         const userSkills = await (prisma as any).userSkill.findMany({
             where: { userId },
-            include: { skill: { select: { id: true, name: true, color: true, category: true } } },
+            include: { skill: { select: { id: true, name: true, color: true } } },
             orderBy: { mastery: 'desc' }
         });
 
@@ -28,7 +28,6 @@ export async function GET(request: Request) {
                 id: skill.id,
                 name: skill.name,
                 color: skill.color,
-                category: skill.category,
                 mastery: userSkill ? userSkill.mastery : 0
             };
         });

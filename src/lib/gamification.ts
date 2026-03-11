@@ -304,9 +304,6 @@ export async function updateAcademicStability(userId: string): Promise<number> {
 
 // ─── Skill Mastery Update ────────────────────────────────
 
-/**
- * Update skill mastery for all skills linked to an assignment.
- */
 export async function updateSkillMastery(
     userId: string,
     assignmentId: string,
@@ -319,10 +316,19 @@ export async function updateSkillMastery(
     const masteryIncrement = Math.min(10, Math.round(xpEarned / 20));
 
     for (const as_ of assignmentSkills) {
+        // Fetch current mastery to apply the cap
+        const existing = await (prisma as any).userSkill.findUnique({
+            where: { userId_skillId: { userId, skillId: as_.skillId } },
+            select: { mastery: true },
+        });
+
+        const currentMastery = existing ? existing.mastery : 0;
+        const newMastery = Math.min(100, currentMastery + masteryIncrement);
+
         await (prisma as any).userSkill.upsert({
             where: { userId_skillId: { userId, skillId: as_.skillId } },
-            update: { mastery: { increment: masteryIncrement } },
-            create: { userId, skillId: as_.skillId, mastery: masteryIncrement },
+            update: { mastery: newMastery },
+            create: { userId, skillId: as_.skillId, mastery: newMastery },
         });
     }
 }
