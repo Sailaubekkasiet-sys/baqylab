@@ -595,9 +595,47 @@ export default function AssignmentDetailPage() {
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                     <div className="space-y-4">
                                         <div className="flex items-center justify-between">
-                                            <h2 className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
-                                                {gradingSubmission.student.name} (v{gradingSubmission.version})
-                                            </h2>
+                                            <div className="flex items-center gap-3">
+                                                <h2 className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
+                                                    {gradingSubmission.student.name}
+                                                </h2>
+                                                {(() => {
+                                                    const studentVersions = allStudentSubmissions
+                                                        .filter((s: any) => s.studentId === gradingSubmission.studentId)
+                                                        .sort((a: any, b: any) => b.version - a.version);
+
+                                                    if (studentVersions.length > 1) {
+                                                        return (
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>{t('review.versionSelect')}</span>
+                                                                <select
+                                                                    value={gradingSubmission.id}
+                                                                    onChange={(e) => {
+                                                                        const selected = studentVersions.find((s: any) => s.id === e.target.value);
+                                                                        if (selected) {
+                                                                            setGradingSubmission(selected);
+                                                                            setIsBestSolution(selected.isBestSolution || false);
+                                                                            setCriterionGrades(assignment.rubricCriteria.map((c: any) => {
+                                                                                const existing = selected.grades.find((g: any) => g.criterionId === c.id);
+                                                                                return { criterionId: c.id, points: existing?.points ?? c.maxPoints, comment: existing?.comment || '' };
+                                                                            }));
+                                                                        }
+                                                                    }}
+                                                                    className="text-sm rounded border px-2 py-1 bg-transparent"
+                                                                    style={{ borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
+                                                                >
+                                                                    {studentVersions.map((v: any) => (
+                                                                        <option key={v.id} value={v.id}>
+                                                                            v{v.version} - {new Date(v.createdAt).toLocaleDateString()} {new Date(v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                            </div>
+                                                        );
+                                                    }
+                                                    return <Badge variant="info">v{gradingSubmission.version}</Badge>;
+                                                })()}
+                                            </div>
                                             <Button variant="ghost" size="sm" onClick={() => setGradingSubmission(null)}>{t('assign.back')}</Button>
                                         </div>
 
