@@ -44,7 +44,7 @@ export async function GET() {
         const userSkills = await (prisma as any).userSkill.findMany({
             where: { userId },
             include: { skill: true },
-            orderBy: { masteryLevel: 'desc' },
+            orderBy: { mastery: 'desc' },
         });
 
         // Get recent submissions count
@@ -67,7 +67,7 @@ export async function GET() {
         });
 
         // Class count
-        const classCount = await (prisma as any).classMembership.count({
+        const classCount = await (prisma as any).classMember.count({
             where: { userId },
         });
 
@@ -84,6 +84,34 @@ export async function GET() {
         });
     } catch (error) {
         console.error('Profile API error:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+}
+
+export async function PUT(request: Request) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const userId = (session.user as any).id;
+        const body = await request.json();
+        const { name } = body;
+
+        if (!name || typeof name !== 'string' || name.trim().length < 2) {
+            return NextResponse.json({ error: 'Name must be at least 2 characters' }, { status: 400 });
+        }
+
+        const updatedUser = await prisma.user.update({
+            where: { id: userId },
+            data: { name: name.trim() },
+            select: { id: true, name: true, email: true },
+        });
+
+        return NextResponse.json(updatedUser);
+    } catch (error) {
+        console.error('Profile update error:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

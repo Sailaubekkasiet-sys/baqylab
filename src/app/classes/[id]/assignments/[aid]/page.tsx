@@ -10,6 +10,7 @@ import { TextArea, Input } from '@/components/ui/Input';
 import { useI18n } from '@/components/I18nProvider';
 import { X } from 'lucide-react';
 
+import { UploadButton } from '@/lib/uploadthing';
 const icons = {
     info: <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
     warning: <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>,
@@ -63,9 +64,30 @@ export default function AssignmentDetailPage() {
     useEffect(() => {
         fetch(`/api/assignments/${aid}`)
             .then(r => r.json())
-            .then(d => { setAssignment(d.assignment); setLoading(false); })
+            .then(d => {
+                setAssignment(d.assignment);
+                const assignment = d.assignment;
+                if (assignment) {
+                    const mySubs = assignment.submissions.filter((s: any) => s.studentId === userId).sort((a: any, b: any) => b.version - a.version);
+                    if (mySubs.length > 0) {
+                        const latest = mySubs[0];
+                        setCode(latest.code || '');
+                        setAnswerText(latest.answerText || '');
+                        if (latest.quizAnswers) {
+                            try { setQuizAnswers(JSON.parse(latest.quizAnswers)); } catch (e) { }
+                        }
+                        if (latest.attachments) {
+                            setAttachments(latest.attachments);
+                        }
+                        if (latest.selfChecks) {
+                            try { setCheckedItems(JSON.parse(latest.selfChecks)); } catch (e) { }
+                        }
+                    }
+                }
+                setLoading(false);
+            })
             .catch(() => setLoading(false));
-    }, [aid]);
+    }, [aid, userId]);
 
 
 
@@ -159,7 +181,6 @@ export default function AssignmentDetailPage() {
             { key: 'task', label: t('assign.info') },
             { key: 'submit', label: t('assign.solution') },
             { key: 'versions', label: `${t('assign.versions')} (${mySubmissions.length})` },
-            { key: 'peer', label: t('peer.title') },
         ];
 
     return (
@@ -291,31 +312,21 @@ export default function AssignmentDetailPage() {
                             <h3 className="text-sm font-medium mb-2">{t('assign.attachFileOpt')}</h3>
                             <Input placeholder={t('assign.linkExample')} value={attachments} onChange={e => setAttachments(e.target.value)} />
 
-                            <label className="mt-2 flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed cursor-pointer hover:border-brand-500 transition-colors" style={{ borderColor: 'var(--border-hover)', background: 'var(--bg-secondary)' }}>
-                                <span className={`w-5 h-5 text-brand-500 ${uploadingAttachment ? 'animate-spin' : ''}`} aria-hidden="true">
-                                    {uploadingAttachment ? (
-                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
-                                    ) : (
-                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" /></svg>
-                                    )}
-                                </span>
-                                <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                                    {uploadingAttachment ? t('common.loading') : t('class.uploadFile')}
-                                </span>
-                                <input type="file" className="hidden" disabled={uploadingAttachment} onChange={async (e) => {
-                                    const file = e.target.files?.[0];
-                                    if (!file) return;
-                                    setUploadingAttachment(true);
-                                    const formData = new FormData();
-                                    formData.append('file', file);
-                                    formData.append('assignmentId', aid as string);
-                                    try {
-                                        const r = await fetch('/api/submissions/upload', { method: 'POST', body: formData });
-                                        const d = await r.json();
-                                        if (d.url) setAttachments(prev => prev ? prev + ', ' + d.url : d.url);
-                                    } finally { setUploadingAttachment(false); }
-                                }} />
-                            </label>
+                            <div className="mt-2">
+                                <UploadButton
+                                    endpoint="courseAttachment"
+                                    onClientUploadComplete={(res: any) => {
+                                        if (res?.[0]) {
+                                            const newUrl = res[0].url;
+                                            setAttachments(prev => prev ? prev + ', ' + newUrl : newUrl);
+                                            alert(t('class.uploadSuccess') || 'Uploaded successfully');
+                                        }
+                                    }}
+                                    onUploadError={(error: Error) => {
+                                        alert(`ERROR! ${error.message}`);
+                                    }}
+                                />
+                            </div>
                         </div>
                     </Card>
 

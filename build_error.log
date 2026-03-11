@@ -1,0 +1,68 @@
+  ▲ Next.js 14.2.15
+  - Environments: .env
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/25) ...
+   Generating static pages (6/25) 
+   Generating static pages (12/25) 
+   Generating static pages (18/25) 
+ ✓ Generating static pages (25/25)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    2.16 kB         388 kB
+├ ○ /_not-found                          876 B          88.4 kB
+├ ƒ /api/assignments                     0 B                0 B
+├ ƒ /api/assignments/[id]                0 B                0 B
+├ ƒ /api/auth/[...nextauth]              0 B                0 B
+├ ƒ /api/auth/register                   0 B                0 B
+├ ƒ /api/classes                         0 B                0 B
+├ ƒ /api/classes/[id]                    0 B                0 B
+├ ƒ /api/classes/[id]/analytics          0 B                0 B
+├ ƒ /api/classes/[id]/export             0 B                0 B
+├ ƒ /api/classes/join                    0 B                0 B
+├ ƒ /api/execute                         0 B                0 B
+├ ƒ /api/grades                          0 B                0 B
+├ ƒ /api/grades/my                       0 B                0 B
+├ ƒ /api/lectures                        0 B                0 B
+├ ƒ /api/lectures/[id]                   0 B                0 B
+├ ƒ /api/lectures/[id]/comments          0 B                0 B
+├ ƒ /api/profile                         0 B                0 B
+├ ƒ /api/profile/report                  0 B                0 B
+├ ƒ /api/skills                          0 B                0 B
+├ ƒ /api/skills/map                      0 B                0 B
+├ ƒ /api/skills/progress                 0 B                0 B
+├ ƒ /api/submissions                     0 B                0 B
+├ ƒ /api/teams                           0 B                0 B
+├ ƒ /api/uploadthing                     0 B                0 B
+├ ○ /classes                             1.59 kB         388 kB
+├ ƒ /classes/[id]                        5.64 kB         392 kB
+├ ƒ /classes/[id]/assignments/[aid]      32 kB           411 kB
+├ ƒ /classes/[id]/assignments/new        6.15 kB         381 kB
+├ ƒ /classes/[id]/lectures/[lid]         3.63 kB         383 kB
+├ ƒ /classes/[id]/lectures/[lid]/edit    4.56 kB         387 kB
+├ ƒ /classes/[id]/lectures/new           4.37 kB         383 kB
+├ ○ /classes/new                         2.38 kB         377 kB
+├ ○ /dashboard                           4.91 kB         391 kB
+├ ○ /grades                              1.84 kB         381 kB
+├ ○ /join                                2.46 kB         377 kB
+├ ○ /login                               3.35 kB         389 kB
+├ ƒ /profile                             3.01 kB         378 kB
+├ ○ /register                            3.57 kB         390 kB
+├ ○ /sandbox                             3.69 kB         378 kB
+└ ○ /skills                              1.55 kB         381 kB
++ First Load JS shared by all            87.5 kB
+  ├ chunks/117-e15a15893e0f84fa.js       31.8 kB
+  ├ chunks/fd9d1056-d1dcaecf2748bd93.js  53.6 kB
+  └ other shared chunks (total)          2.09 kB
+
+
+ƒ Middleware                             49.4 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

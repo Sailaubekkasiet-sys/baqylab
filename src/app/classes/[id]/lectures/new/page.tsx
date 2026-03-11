@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Input, TextArea } from '@/components/ui/Input';
+import { Input } from '@/components/ui/Input';
+import { RichTextEditor } from '@/components/RichTextEditor';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useI18n } from '@/components/I18nProvider';
@@ -42,7 +43,10 @@ export default function NewLecturePage() {
                 {error && <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"><p className="text-sm text-red-600 dark:text-red-400">{error}</p></div>}
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <Input label={t('lecture.titleLabel')} placeholder={t('lecture.introArrays')} value={title} onChange={e => setTitle(e.target.value)} required />
-                    <TextArea label={t('lecture.contentLabel')} placeholder={t('lecture.contentPlaceholder')} value={content} onChange={e => setContent(e.target.value)} className="min-h-[300px]" />
+                    <div>
+                        <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>{t('lecture.contentLabel')}</label>
+                        <RichTextEditor content={content} onChange={setContent} />
+                    </div>
 
                     <div className="space-y-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
                         <label className="block text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{t('lecture.sources') || 'Источники и ссылки'}</label>

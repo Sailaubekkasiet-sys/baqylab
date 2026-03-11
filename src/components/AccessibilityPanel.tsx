@@ -40,7 +40,7 @@ export function AccessibilityPanel() {
 
             {/* Modal Panel */}
             {isOpen && (
-                <div className={`absolute bottom-20 right-0 w-80 p-5 rounded-2xl shadow-2xl border ${highContrast ? 'bg-black border-yellow-500 text-yellow-500' : 'bg-bg-card border-border-default text-text-primary'}`}>
+                <div className={`absolute bottom-20 right-0 w-80 p-5 rounded-2xl shadow-2xl border ${highContrast ? 'bg-black border-yellow-500 text-yellow-500' : 'bg-white dark:bg-slate-900 border-border-default text-text-primary'}`}>
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="font-bold text-lg">{t('a11y.title')}</h3>
                         <button

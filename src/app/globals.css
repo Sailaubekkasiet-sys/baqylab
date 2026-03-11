@@ -69,6 +69,7 @@
 }
 
 @layer components {
+
   /* Glassmorphism card */
   .glass-card {
     background: var(--bg-card);
@@ -102,13 +103,16 @@
   ::-webkit-scrollbar {
     @apply w-2;
   }
+
   ::-webkit-scrollbar-track {
     background: var(--bg-secondary);
   }
+
   ::-webkit-scrollbar-thumb {
     background: var(--border-hover);
     @apply rounded-full;
   }
+
   ::-webkit-scrollbar-thumb:hover {
     background: var(--text-tertiary);
   }
@@ -117,21 +121,35 @@
   .badge-error {
     @apply bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400;
   }
+
   .badge-tip {
     @apply bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400;
   }
+
   .badge-good {
     @apply bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400;
   }
+
   .badge-think {
     @apply bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400;
   }
 
   /* Skill radar colors */
-  .skill-beginner { @apply text-red-500; }
-  .skill-intermediate { @apply text-amber-500; }
-  .skill-advanced { @apply text-green-500; }
-  .skill-expert { @apply text-brand-500; }
+  .skill-beginner {
+    @apply text-red-500;
+  }
+
+  .skill-intermediate {
+    @apply text-amber-500;
+  }
+
+  .skill-advanced {
+    @apply text-green-500;
+  }
+
+  .skill-expert {
+    @apply text-brand-500;
+  }
 }
 
 @layer utilities {
@@ -183,8 +201,8 @@
     border: 3px solid #FFFF00 !important;
   }
 
-  .reduced-motion *, 
-  .reduced-motion *::before, 
+  .reduced-motion *,
+  .reduced-motion *::before,
   .reduced-motion *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
@@ -194,7 +212,7 @@
 }
 
 /* Global Focus Styles for Accessibility */
-*:focus-visible {
-  outline: 4px solid orange !important;
+.high-contrast *:focus-visible {
+  outline: 4px solid #FFFF00 !important;
   outline-offset: 2px !important;
 }

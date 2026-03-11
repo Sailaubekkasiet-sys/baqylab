@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input, TextArea } from '@/components/ui/Input';
@@ -11,6 +12,8 @@ export default function LectureDetailPage() {
     const { t } = useI18n();
     const { id: classId, lid: lectureId } = useParams();
     const router = useRouter();
+    const { data: session } = useSession() as any;
+
     const [lecture, setLecture] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [commentText, setCommentText] = useState('');
@@ -50,17 +53,31 @@ export default function LectureDetailPage() {
     const rootComments = lecture.comments.filter((c: any) => !c.parentId);
     const replies = lecture.comments.filter((c: any) => c.parentId);
 
+    const isTeacherOrAdmin = session?.user?.role === 'ADMIN' || (session?.user?.role === 'TEACHER' && lecture.class.teacherId === session?.user?.id);
+
     return (
         <div className="max-w-4xl mx-auto space-y-6 animate-fade-in pb-10">
-            <Button variant="ghost" size="sm" onClick={() => router.push(`/classes/${classId}`)}>{t('class.backToClass')}</Button>
+            <div className="flex justify-between items-start">
+                <Button variant="ghost" size="sm" onClick={() => router.push(`/classes/${classId}`)}>{t('class.backToClass')}</Button>
+                {isTeacherOrAdmin && (
+                    <Button variant="secondary" size="sm" onClick={() => router.push(`/classes/${classId}/lectures/${lectureId}/edit`)}>
+                        <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                        {t('lecture.edit')}
+                    </Button>
+                )}
+            </div>
 
             <h1 className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>{lecture.title}</h1>
             <p className="text-sm opacity-60">{t('class.createdAt')} {new Date(lecture.createdAt).toLocaleString()}</p>
 
             <Card padding="lg" className="prose dark:prose-invert max-w-none">
-                <div className="whitespace-pre-wrap font-sans text-sm md:text-base leading-relaxed" style={{ color: 'var(--text-primary)' }}>
-                    {lecture.content}
-                </div>
+                <div
+                    className="font-sans text-sm md:text-base leading-relaxed"
+                    style={{ color: 'var(--text-primary)' }}
+                    dangerouslySetInnerHTML={{ __html: lecture.content }}
+                />
             </Card>
 
             {lecture.resources && lecture.resources !== '[]' && (
