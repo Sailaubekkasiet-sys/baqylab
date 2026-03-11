@@ -5,7 +5,14 @@ import { authOptions } from "@/lib/auth";
 const f = createUploadthing();
 
 export const ourFileRouter = {
-    courseAttachment: f({ blob: { maxFileSize: "32MB", maxFileCount: 1 } })
+    courseAttachment: f({
+        pdf: { maxFileSize: "32MB", maxFileCount: 1 },
+        image: { maxFileSize: "32MB", maxFileCount: 1 },
+        video: { maxFileSize: "32MB", maxFileCount: 1 },
+        audio: { maxFileSize: "32MB", maxFileCount: 1 },
+        text: { maxFileSize: "32MB", maxFileCount: 1 },
+        blob: { maxFileSize: "32MB", maxFileCount: 1 }
+    })
         .middleware(async ({ req }) => {
             const session = await getServerSession(authOptions);
             if (!session) throw new Error("Unauthorized");
