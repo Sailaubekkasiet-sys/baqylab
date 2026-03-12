@@ -332,6 +332,10 @@ export const translations: Record<Locale, Record<string, string>> = {
         'profile.tGradedDesc': 'Вы успешно проверили и оценили',
         'profile.tClassesOverview': 'Обзор классов',
         'peer.existing': 'Оценки одноклассников',
+        'assign.edit': 'Редактировать задание',
+        'assign.save': 'Сохранить изменения',
+        'assign.errUpdate': 'Ошибка при обновлении',
+        'assign.updateSuccess': 'Задание обновлено',
     },
     kz: {
         'app.name': 'BaqyLab',
@@ -664,6 +668,10 @@ export const translations: Record<Locale, Record<string, string>> = {
         'profile.tGradedDesc': 'Сіз сәтті тексеріп, бағаладыңыз',
         'profile.tClassesOverview': 'Сыныптарға шолу',
         'peer.existing': 'Оқушылар бағалауы',
+        'assign.edit': 'Тапсырманы өңдеу',
+        'assign.save': 'Өзгерістерді сақтау',
+        'assign.errUpdate': 'Жаңарту қатесі',
+        'assign.updateSuccess': 'Тапсырма жаңартылды',
     },
     en: {
         'app.name': 'BaqyLab',
@@ -996,5 +1004,9 @@ export const translations: Record<Locale, Record<string, string>> = {
         'profile.tGradedDesc': 'You have successfully reviewed and graded',
         'profile.tClassesOverview': 'Classes Overview',
         'peer.existing': 'Peer reviews',
+        'assign.edit': 'Edit Assignment',
+        'assign.save': 'Save Changes',
+        'assign.errUpdate': 'Update Error',
+        'assign.updateSuccess': 'Assignment updated',
     }
 };

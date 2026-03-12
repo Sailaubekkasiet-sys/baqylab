@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Card, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -23,6 +23,7 @@ import { runClientSideAutoGrade } from '@/utils/clientAutograde';
 
 export default function AssignmentDetailPage() {
     const { id: classId, aid } = useParams();
+    const router = useRouter();
     const { data: session } = useSession();
     const { t } = useI18n();
     const role = (session?.user as any)?.role;
@@ -187,7 +188,19 @@ export default function AssignmentDetailPage() {
         <div className="space-y-6 animate-fade-in max-w-5xl mx-auto">
             {/* Header */}
             <div>
-                <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{assignment.title}</h1>
+                <div className="flex items-center justify-between">
+                    <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{assignment.title}</h1>
+                    {role === 'TEACHER' && (
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => router.push(`/classes/${classId}/assignments/${aid}/edit`)}
+                        >
+                            <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
+                            {t('assign.edit')}
+                        </Button>
+                    )}
+                </div>
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
                     <Badge variant="default">{type === 'CODE' ? t('assign.type.code') : type === 'TEXT' ? t('assign.type.text') : t('assign.type.quiz')}</Badge>
                     {type === 'CODE' && <Badge variant="info">{assignment.language}</Badge>}
