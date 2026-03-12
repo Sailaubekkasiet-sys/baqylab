@@ -313,24 +313,25 @@ function EmptyState({ text }: { text: string }) {
 function MaterialUpload({ classId, onDone }: { classId: string; onDone: () => void }) {
     const { t } = useI18n();
     const [uploading, setUploading] = useState(false);
+    const [progress, setProgress] = useState(0);
 
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
         setUploading(true);
+        setProgress(0);
 
         try {
-            // Step 1: Upload file to Vercel Blob via /api/upload
-            const uploadForm = new FormData();
-            uploadForm.append('file', file);
-
-            const uploadRes = await fetch('/api/upload', { method: 'POST', body: uploadForm });
-            if (!uploadRes.ok) {
-                let msg = 'Upload failed';
-                try { msg = (await uploadRes.json()).error || msg; } catch { msg = await uploadRes.text().catch(() => msg); }
-                throw new Error(msg);
-            }
-            const blob = await uploadRes.json();
+            // Step 1: Client-side upload directly to Vercel Blob (no size limit from serverless)
+            const { upload } = await import('@vercel/blob/client');
+            const blob = await upload(file.name, file, {
+                access: 'private',
+                handleUploadUrl: '/api/upload/client',
+                multipart: true,
+                onUploadProgress: ({ percentage }) => {
+                    setProgress(Math.round(percentage));
+                },
+            });
 
             // Step 2: Save material metadata to DB
             const metaRes = await fetch('/api/materials', {
@@ -354,6 +355,7 @@ function MaterialUpload({ classId, onDone }: { classId: string; onDone: () => vo
             alert(err.message || 'Upload failed');
         } finally {
             setUploading(false);
+            setProgress(0);
             e.target.value = '';
         }
     };
@@ -368,7 +370,7 @@ function MaterialUpload({ classId, onDone }: { classId: string; onDone: () => vo
                     {uploading ? icons.clock : icons.upload}
                 </span>
                 <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                    {uploading ? t('common.loading') : t('class.uploadFile')}
+                    {uploading ? `${t('common.loading')} ${progress}%` : t('class.uploadFile')}
                 </span>
                 <input type="file" className="hidden" onChange={handleUpload} disabled={uploading} />
             </label>
