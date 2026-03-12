@@ -75,12 +75,40 @@ export default function NewAssignmentPage() {
 
     const [allSkills, setAllSkills] = useState<{ id: string; name: string; color: string }[]>([]);
     const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+
+    // New skill creation state
+    const [newSkillName, setNewSkillName] = useState('');
+    const [newSkillColor, setNewSkillColor] = useState('#6366f1');
+    const [creatingSkill, setCreatingSkill] = useState(false);
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
     useEffect(() => {
         fetch('/api/skills').then(r => r.json()).then(d => setAllSkills(d.skills || []));
     }, []);
+
+    const handleCreateSkill = async () => {
+        if (!newSkillName.trim()) return;
+        setCreatingSkill(true);
+        try {
+            const res = await fetch('/api/skills', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newSkillName.trim(), description: '', color: newSkillColor }),
+            });
+            if (res.ok) {
+                const { skill } = await res.json();
+                setAllSkills(prev => [...prev.filter(s => s.id !== skill.id), skill].sort((a, b) => a.name.localeCompare(b.name)));
+                setSelectedSkills(prev => [...prev.filter(id => id !== skill.id), skill.id]);
+                setNewSkillName('');
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setCreatingSkill(false);
+        }
+    };
 
     const addCriterion = () => setCriteria([...criteria, { name: '', description: '', maxPoints: 10, type: 'scale' }]);
     const removeCriterion = (i: number) => setCriteria(criteria.filter((_, idx) => idx !== i));
@@ -362,16 +390,50 @@ export default function NewAssignmentPage() {
                     </Card>
                 )}
 
-                {/* Skills Component (omitted inner mapping for brevity, similar to before but without emojis) */}
+                {/* Skills Component */}
                 <Card padding="lg">
-                    <h2 className="text-lg font-semibold mb-3 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>{t('nav.skills')}</h2>
+                    <h2 className="text-lg font-semibold mb-3 flex items-center justify-between gap-2" style={{ color: 'var(--text-primary)' }}>
+                        {t('nav.skills')}
+                    </h2>
+
+                    {/* Inline Skill Creation */}
+                    <div className="flex flex-wrap items-center gap-2 mb-4 p-3 rounded-lg border" style={{ borderColor: 'var(--border-default)', background: 'var(--bg-secondary)' }}>
+                        <input
+                            type="text"
+                            placeholder={t('skills.newSkillName') || "Новый навык (напр. Loops)"}
+                            value={newSkillName}
+                            onChange={e => setNewSkillName(e.target.value)}
+                            className="flex-1 min-w-[150px] rounded-md border px-3 py-1.5 text-sm outline-none focus:ring-1 focus:ring-brand-500/50"
+                            style={{ background: 'var(--bg-card)', borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
+                        />
+                        <input
+                            type="color"
+                            value={newSkillColor}
+                            onChange={e => setNewSkillColor(e.target.value)}
+                            className="w-8 h-8 rounded shrink-0 cursor-pointer border-0 p-0"
+                            style={{ background: 'transparent' }}
+                        />
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="primary"
+                            onClick={handleCreateSkill}
+                            disabled={creatingSkill || !newSkillName.trim()}
+                        >
+                            {creatingSkill ? "..." : icons.add}
+                        </Button>
+                    </div>
+
                     <div className="flex flex-wrap gap-2">
+                        {allSkills.length === 0 && !creatingSkill && (
+                            <p className="text-sm italic" style={{ color: 'var(--text-tertiary)' }}>{t('skills.noSkillsAvailable') || "Нет доступных навыков. Создайте один выше."}</p>
+                        )}
                         {allSkills.map(s => (
                             <button
                                 key={s.id}
                                 type="button"
                                 onClick={() => setSelectedSkills(prev => prev.includes(s.id) ? prev.filter(id => id !== s.id) : [...prev, s.id])}
-                                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${selectedSkills.includes(s.id) ? 'border-brand-500 scale-105' : ''}`}
+                                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${selectedSkills.includes(s.id) ? 'border-brand-500 scale-105 shadow-sm' : 'hover:scale-[1.02]'}`}
                                 style={{
                                     borderColor: selectedSkills.includes(s.id) ? s.color : 'var(--border-default)',
                                     backgroundColor: selectedSkills.includes(s.id) ? s.color + '20' : 'var(--bg-secondary)',

@@ -59,3 +59,44 @@ export async function GET(
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
+
+export async function DELETE(
+    request: Request,
+    { params }: { params: { id: string } }
+) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const userId = (session.user as any).id;
+        const role = (session.user as any).role;
+
+        if (role !== 'TEACHER') {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
+        const cls = await prisma.class.findUnique({
+            where: { id: params.id },
+            select: { teacherId: true },
+        });
+
+        if (!cls) {
+            return NextResponse.json({ error: 'class.notFound' }, { status: 404 });
+        }
+
+        if (cls.teacherId !== userId) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
+        await prisma.class.delete({
+            where: { id: params.id },
+        });
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error('DELETE /api/classes/[id] error:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+}

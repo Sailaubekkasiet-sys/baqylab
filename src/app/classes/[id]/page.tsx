@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardTitle, CardDescription } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -19,7 +19,8 @@ const icons = {
     upload: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" /></svg>,
     clock: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>,
     analytics: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" /></svg>,
-    check: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.5 12.75l6 6 9-13.5" /></svg>
+    check: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.5 12.75l6 6 9-13.5" /></svg>,
+    trash: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
 };
 
 interface ClassDetail {
@@ -36,17 +37,36 @@ interface ClassDetail {
         submissions?: { id: string; code?: string; answerText?: string; attachments?: string; studentId: string; student: { name: string } }[];
     }[];
     members: { user: { id: string; name: string; email: string } }[];
-    materials: { id: string; fileName: string; fileSize: number; createdAt: string }[];
+    materials: { id: string; fileName: string; fileSize: number; filePath: string; createdAt: string }[];
 }
 
 export default function ClassDetailPage() {
     const { id } = useParams();
     const { data: session } = useSession();
     const { t } = useI18n();
+    const router = useRouter();
     const [cls, setCls] = useState<ClassDetail | null>(null);
     const [tab, setTab] = useState<'lectures' | 'assignments' | 'students' | 'materials' | 'analytics' | 'gallery'>('lectures');
     const [loading, setLoading] = useState(true);
+    const [deleting, setDeleting] = useState(false);
     const role = (session?.user as any)?.role;
+
+    const handleDeleteClass = async () => {
+        if (!confirm(t('class.deleteConfirm'))) return;
+        setDeleting(true);
+        try {
+            const res = await fetch(`/api/classes/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                router.push('/classes');
+            } else {
+                alert('Error deleting class');
+            }
+        } catch {
+            alert('Error deleting class');
+        } finally {
+            setDeleting(false);
+        }
+    };
 
     useEffect(() => {
         fetch(`/api/classes/${id}`)
@@ -88,9 +108,12 @@ export default function ClassDetailPage() {
                     <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>{t('class.teacher')} {cls.teacher.name}</p>
                 </div>
                 {role === 'TEACHER' && (
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                         <Link href={`/classes/${id}/lectures/new`}><Button size="sm" className="flex items-center gap-1.5"><span className="w-4 h-4">{icons.lectures}</span>{t('class.lecture')}</Button></Link>
                         <Link href={`/classes/${id}/assignments/new`}><Button size="sm" className="flex items-center gap-1.5"><span className="w-4 h-4">{icons.assignments}</span>{t('class.assignment')}</Button></Link>
+                        <Button size="sm" variant="secondary" className="flex items-center gap-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={handleDeleteClass} disabled={deleting}>
+                            <span className="w-4 h-4">{icons.trash}</span>{deleting ? t('common.loading') : t('class.deleteClass')}
+                        </Button>
                     </div>
                 )}
             </div>
@@ -189,26 +212,38 @@ export default function ClassDetailPage() {
                         )}
                         {cls.materials.length === 0
                             ? <EmptyState text={t('class.noMaterials')} />
-                            : cls.materials.map((m) => (
-                                <Card key={m.id} padding="sm" className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded shrink-0 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 text-brand-500">
-                                            {icons.file}
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{m.fileName}</p>
-                                            <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                                                {(m.fileSize / 1024).toFixed(1)} KB · {new Date(m.createdAt).toLocaleDateString('ru-RU')}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <a href={`/api/materials/${m.id}/download`}>
-                                        <Button size="sm" variant="secondary" className="flex items-center gap-1.5">
-                                            {icons.download} {t('common.download')}
-                                        </Button>
+                            : <div className="space-y-2">{cls.materials.map((m: any) => {
+                                const fileUrl = m.filePath || '';
+                                const downloadUrl = fileUrl.includes('blob.vercel-storage')
+                                    ? `/api/files?url=${encodeURIComponent(fileUrl)}`
+                                    : fileUrl;
+                                const ext = m.fileName.split('.').pop()?.toUpperCase() || '';
+                                const sizeStr = m.fileSize >= 1024 * 1024
+                                    ? `${(m.fileSize / (1024 * 1024)).toFixed(1)} MB`
+                                    : `${(m.fileSize / 1024).toFixed(1)} KB`;
+                                return (
+                                    <a key={m.id} href={downloadUrl} download={m.fileName}
+                                        className="block group no-underline"
+                                    >
+                                        <Card padding="sm" hover className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <div className="w-10 h-10 rounded-lg shrink-0 flex items-center justify-center bg-brand-50 dark:bg-brand-900/20 text-brand-500 font-bold text-[10px]">
+                                                    {ext || icons.file}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-medium truncate group-hover:text-brand-500 transition-colors" style={{ color: 'var(--text-primary)' }}>{m.fileName}</p>
+                                                    <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                                                        {sizeStr} · {new Date(m.createdAt).toLocaleDateString()}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="shrink-0 ml-3 text-brand-500 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                {icons.download}
+                                            </div>
+                                        </Card>
                                     </a>
-                                </Card>
-                            ))
+                                );
+                            })}</div>
                         }
                     </div>
                 )}
@@ -284,13 +319,23 @@ function MaterialUpload({ classId, onDone }: { classId: string; onDone: () => vo
         if (!file) return;
         setUploading(true);
 
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('classId', classId);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('classId', classId);
 
-        await fetch('/api/materials', { method: 'POST', body: formData });
-        setUploading(false);
-        onDone();
+            const res = await fetch('/api/materials', { method: 'POST', body: formData });
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || 'Upload failed');
+            }
+            onDone();
+        } catch (err: any) {
+            alert(err.message || 'Upload failed');
+        } finally {
+            setUploading(false);
+            e.target.value = '';
+        }
     };
 
     return (
