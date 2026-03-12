@@ -320,15 +320,35 @@ function MaterialUpload({ classId, onDone }: { classId: string; onDone: () => vo
         setUploading(true);
 
         try {
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('classId', classId);
+            // Step 1: Upload file to Vercel Blob via /api/upload
+            const uploadForm = new FormData();
+            uploadForm.append('file', file);
 
-            const res = await fetch('/api/materials', { method: 'POST', body: formData });
-            if (!res.ok) {
-                const data = await res.json();
-                throw new Error(data.error || 'Upload failed');
+            const uploadRes = await fetch('/api/upload', { method: 'POST', body: uploadForm });
+            if (!uploadRes.ok) {
+                let msg = 'Upload failed';
+                try { msg = (await uploadRes.json()).error || msg; } catch { msg = await uploadRes.text().catch(() => msg); }
+                throw new Error(msg);
             }
+            const blob = await uploadRes.json();
+
+            // Step 2: Save material metadata to DB
+            const metaRes = await fetch('/api/materials', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    classId,
+                    fileName: file.name,
+                    fileSize: file.size,
+                    filePath: blob.url,
+                    mimeType: file.type || 'application/octet-stream',
+                }),
+            });
+            if (!metaRes.ok) {
+                const data = await metaRes.json().catch(() => ({ error: 'Save failed' }));
+                throw new Error(data.error || 'Save failed');
+            }
+
             onDone();
         } catch (err: any) {
             alert(err.message || 'Upload failed');
