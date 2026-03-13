@@ -336,6 +336,9 @@ export const translations: Record<Locale, Record<string, string>> = {
         'assign.save': 'Сохранить изменения',
         'assign.errUpdate': 'Ошибка при обновлении',
         'assign.updateSuccess': 'Задание обновлено',
+        'assign.delete': 'Удалить задание',
+        'assign.deleteConfirm': 'Вы уверены? Задание и все связанные данные (работы учеников, оценки, критерии) будут безвозвратно удалены.',
+        'assign.deleteSuccess': 'Задание удалено',
     },
     kz: {
         'app.name': 'BaqyLab',
@@ -672,6 +675,9 @@ export const translations: Record<Locale, Record<string, string>> = {
         'assign.save': 'Өзгерістерді сақтау',
         'assign.errUpdate': 'Жаңарту қатесі',
         'assign.updateSuccess': 'Тапсырма жаңартылды',
+        'assign.delete': 'Тапсырманы жою',
+        'assign.deleteConfirm': 'Сіз сенімдісіз бе? Тапсырма және барлық байланысты деректер (оқушылардың жұмыстары, бағалар, критерийлер) біржола жойылады.',
+        'assign.deleteSuccess': 'Тапсырма жойылды',
     },
     en: {
         'app.name': 'BaqyLab',
@@ -1008,5 +1014,8 @@ export const translations: Record<Locale, Record<string, string>> = {
         'assign.save': 'Save Changes',
         'assign.errUpdate': 'Update Error',
         'assign.updateSuccess': 'Assignment updated',
+        'assign.delete': 'Delete Assignment',
+        'assign.deleteConfirm': 'Are you sure? The assignment and all related data (student submissions, grades, criteria) will be permanently deleted.',
+        'assign.deleteSuccess': 'Assignment deleted',
     }
 };

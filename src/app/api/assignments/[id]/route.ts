@@ -131,3 +131,37 @@ export async function GET(
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
+
+// DELETE /api/assignments/[id] — delete assignment (teacher only)
+export async function DELETE(
+    request: Request,
+    { params }: { params: { id: string } }
+) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user || (session.user as any).role !== 'TEACHER') {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
+        const existing = await prisma.assignment.findUnique({
+            where: { id: params.id },
+            include: { class: { select: { teacherId: true } } },
+        });
+
+        if (!existing) {
+            return NextResponse.json({ error: 'Not found' }, { status: 404 });
+        }
+        if (existing.class.teacherId !== (session.user as any).id) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
+        await prisma.assignment.delete({
+            where: { id: params.id },
+        });
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error('DELETE /api/assignments/[id] error:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+}
