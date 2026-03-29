@@ -3,8 +3,10 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { useEffect, useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { useI18n } from './I18nProvider';
+import { BaqyCat } from './BaqyCat';
 
 // We use an SVG string renderer for icons since we removed emojis
 const icons: Record<string, any> = {
@@ -23,6 +25,36 @@ export function Sidebar() {
     const { data: session } = useSession();
     const { t } = useI18n();
     const role = (session?.user as any)?.role;
+    const [petData, setPetData] = useState<any>(null);
+    const [pendingCount, setPendingCount] = useState(0);
+
+    // Fetch pet data
+    useEffect(() => {
+        if (!session) return;
+        fetch('/api/pet')
+            .then((r) => r.json())
+            .then((data) => {
+                if (data.pet) setPetData(data.pet);
+                if (data.pendingCount) setPendingCount(data.pendingCount);
+            })
+            .catch(() => {});
+    }, [session]);
+
+    // Random thought bubble
+    const thought = useMemo(() => {
+        if (!petData) return null;
+        if (petData.health < 15) return t('pet.thoughtSleeping');
+        if (pendingCount > 0) return t('pet.thoughtPending');
+        if (petData.health < 30) {
+            const sadKeys = ['pet.thoughtSad1', 'pet.thoughtSad2', 'pet.thoughtSad3'];
+            return t(sadKeys[Math.floor(Math.random() * sadKeys.length)]);
+        }
+        if (petData.happiness >= 70) {
+            const happyKeys = ['pet.thoughtHappy1', 'pet.thoughtHappy2', 'pet.thoughtHappy3'];
+            return t(happyKeys[Math.floor(Math.random() * happyKeys.length)]);
+        }
+        return t('pet.thoughtHappy1');
+    }, [petData, pendingCount, t]);
 
     if (!session) return null;
 
@@ -91,6 +123,45 @@ export function Sidebar() {
                     );
                 })}
             </nav>
+
+            {/* BaqyCat Widget */}
+            {petData && (
+                <div
+                    className="py-3 px-2 border-t flex flex-col items-center gap-2"
+                    style={{ borderColor: 'var(--border-default)' }}
+                >
+                    {/* Thought bubble */}
+                    {thought && (
+                        <div
+                            className="relative text-[11px] text-center px-3 py-1.5 rounded-xl max-w-full"
+                            style={{
+                                background: 'var(--bg-tertiary)',
+                                color: 'var(--text-secondary)',
+                            }}
+                        >
+                            {thought}
+                            {/* Bubble tail */}
+                            <div
+                                className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45"
+                                style={{ background: 'var(--bg-tertiary)' }}
+                            />
+                        </div>
+                    )}
+                    <BaqyCat
+                        color={petData.color}
+                        health={petData.health}
+                        happiness={petData.happiness}
+                        stage={petData.stage}
+                        size={80}
+                    />
+                    <p
+                        className="text-xs font-medium truncate max-w-full"
+                        style={{ color: 'var(--text-primary)' }}
+                    >
+                        {petData.name}
+                    </p>
+                </div>
+            )}
 
             {/* Bottom info */}
             <div

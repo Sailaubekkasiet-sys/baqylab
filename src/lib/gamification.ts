@@ -423,5 +423,35 @@ export async function processGradingGamification(params: {
         gradeRatio,
     });
 
+    // Heal pet on successful grading
+    await healPetOnGrading(params.studentId);
+
     return { xpEarned, newLevel, newBadges };
+}
+
+// ─── Pet Healing on Grading ─────────────────────────────
+
+/**
+ * When a student's submission is graded, heal their pet.
+ * +10 health, +15 happiness, capped at 100.
+ */
+export async function healPetOnGrading(studentId: string): Promise<void> {
+    try {
+        const pet = await prisma.pet.findUnique({
+            where: { userId: studentId },
+        });
+
+        if (!pet) return;
+
+        await prisma.pet.update({
+            where: { userId: studentId },
+            data: {
+                health: Math.min(100, pet.health + 10),
+                happiness: Math.min(100, pet.happiness + 15),
+                lastInteraction: new Date(),
+            },
+        });
+    } catch {
+        // Pet doesn't exist yet — silently skip
+    }
 }

@@ -8,6 +8,7 @@ import { Card, CardTitle, CardDescription } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { useI18n } from '@/components/I18nProvider';
+import { PetSetupModal } from '@/components/PetSetupModal';
 
 const icons = {
     class: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z" /></svg>,
@@ -36,6 +37,7 @@ export default function DashboardPage() {
     const [classes, setClasses] = useState<ClassData[]>([]);
     const [achievements, setAchievements] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [showPetSetup, setShowPetSetup] = useState(false);
 
     const user = session?.user as any;
     const role = user?.role;
@@ -46,6 +48,7 @@ export default function DashboardPage() {
     useEffect(() => {
         if (status === 'unauthenticated') redirect('/login');
         if (status === 'authenticated') {
+            // Fetch classes
             fetch('/api/classes')
                 .then((r) => r.json())
                 .then((data) => {
@@ -54,6 +57,14 @@ export default function DashboardPage() {
                     setLoading(false);
                 })
                 .catch(() => setLoading(false));
+
+            // Check if user has a pet
+            fetch('/api/pet')
+                .then((r) => r.json())
+                .then((data) => {
+                    if (!data.pet) setShowPetSetup(true);
+                })
+                .catch(() => {});
         }
     }, [status]);
 
@@ -69,6 +80,10 @@ export default function DashboardPage() {
 
     return (
         <div className="space-y-8 animate-fade-in">
+            {/* Pet Setup Modal */}
+            {showPetSetup && (
+                <PetSetupModal onCreated={() => setShowPetSetup(false)} />
+            )}
             {/* Welcome Header */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>

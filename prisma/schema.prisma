@@ -40,6 +40,7 @@ model User {
   achievements     Achievement[]
   comments         Comment[]
   peerReviews      PeerReview[]
+  pet              Pet?
 }
 
 // ─── Achievements (Badges) ───────────────────────────────
@@ -340,4 +341,30 @@ model TeamMember {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([teamId, userId])
+}
+
+// ─── Pet (BaqyCat) ───────────────────────────────────────
+
+enum PetColor {
+  BLACK
+  GINGER
+}
+
+enum PetStage {
+  KITTEN
+  ADULT
+  MASTER
+}
+
+model Pet {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  name            String    @default("BaqyCat")
+  color           PetColor  @default(BLACK)
+  health          Int       @default(100)
+  happiness       Int       @default(100)
+  stage           PetStage  @default(KITTEN)
+  lastInteraction DateTime  @default(now())
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
