@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import jsPDF from 'jspdf';
 
-// GET /api/profile/report — Generate PDF report for the authenticated student
+// GET /api/profile/report — Generate PDF report for the authenticated user (teacher or student)
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
@@ -16,169 +16,312 @@ export async function GET() {
 
         const user = await prisma.user.findUnique({
             where: { id: userId },
-            include: {
-                achievements: true,
-                userSkills: { include: { skill: true } },
-                submissions: {
-                    where: { status: { not: 'draft' } },
-                    include: {
-                        assignment: { select: { title: true, xpReward: true, difficulty: true } },
-                        grades: { include: { criterion: true } },
-                    },
-                    orderBy: { createdAt: 'asc' },
-                },
-                memberships: { include: { class: { select: { name: true } } } },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                xp: true,
+                level: true,
+                streakDays: true,
+                academicStability: true,
+                createdAt: true,
             },
         });
 
         if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-        // Create PDF
-        const doc = new jsPDF();
-        const pageWidth = doc.internal.pageSize.getWidth();
-        let y = 20;
+        const isTeacher = user.role === 'TEACHER';
 
-        // --- Header ---
-        doc.setFontSize(22);
-        doc.setFont('helvetica', 'bold');
-        doc.text('BaqyLab', 14, y);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Student Report — ${new Date().toLocaleDateString()}`, pageWidth - 14, y, { align: 'right' });
-        y += 12;
-
-        // --- Student Info ---
-        doc.setDrawColor(99, 102, 241);
-        doc.setLineWidth(0.5);
-        doc.line(14, y, pageWidth - 14, y);
-        y += 8;
-
-        doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        doc.text(user.name, 14, y);
-        y += 7;
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`${user.email} | Level ${user.level} | ${user.xp} XP | Streak: ${user.streakDays} days`, 14, y);
-        y += 5;
-        doc.text(`Academic Stability: ${Math.round((user.academicStability || 1) * 100)}%`, 14, y);
-        y += 10;
-
-        // --- Classes ---
-        doc.setFontSize(13);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Classes', 14, y);
-        y += 6;
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        user.memberships.forEach(m => {
-            doc.text(`• ${m.class.name}`, 18, y);
-            y += 5;
-        });
-        y += 4;
-
-        // --- Skills ---
-        doc.setFontSize(13);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Skill Map', 14, y);
-        y += 6;
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        if (user.userSkills.length === 0) {
-            doc.text('No skills tracked yet.', 18, y);
-            y += 5;
+        if (isTeacher) {
+            return generateTeacherPDF(user, userId);
         } else {
-            user.userSkills.forEach(us => {
-                const mastery = Math.min(100, (us as any).mastery || 0);
-                doc.text(`${us.skill.name}: ${mastery}%`, 18, y);
-                // Progress bar
-                doc.setFillColor(229, 231, 235);
-                doc.rect(80, y - 3, 80, 4, 'F');
-                doc.setFillColor(99, 102, 241);
-                doc.rect(80, y - 3, 80 * (mastery / 100), 4, 'F');
-                y += 6;
-            });
+            return generateStudentPDF(user, userId);
         }
-        y += 4;
-
-        // --- Badges ---
-        if (y > 240) { doc.addPage(); y = 20; }
-        doc.setFontSize(13);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Achievements', 14, y);
-        y += 6;
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        if (user.achievements.length === 0) {
-            doc.text('No badges earned yet.', 18, y);
-            y += 5;
-        } else {
-            const badgeNames: Record<string, string> = {
-                first_code: '🚀 First Code',
-                five_assignments: '📚 5 Assignments',
-                streak_5: '🔥 5-Day Streak',
-                streak_10: '🔥 10-Day Streak',
-                streak_20: '🔥 20-Day Streak',
-                perfect_score: '⭐ Perfect Score',
-                fast_learner: '⚡ Fast Learner',
-                level_5: '🏆 Level 5',
-                level_10: '👑 Level 10',
-            };
-            user.achievements.forEach(a => {
-                doc.text(`${badgeNames[a.badgeId] || a.badgeId} — ${new Date(a.earnedAt).toLocaleDateString()}`, 18, y);
-                y += 5;
-            });
-        }
-        y += 4;
-
-        // --- XP Growth Chart (text representation) ---
-        if (y > 240) { doc.addPage(); y = 20; }
-        doc.setFontSize(13);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Submission History', 14, y);
-        y += 6;
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-
-        // Table header
-        doc.setFont('helvetica', 'bold');
-        doc.text('Assignment', 18, y);
-        doc.text('Difficulty', 90, y);
-        doc.text('XP', 125, y);
-        doc.text('Score', 145, y);
-        doc.text('Date', 170, y);
-        y += 5;
-        doc.setFont('helvetica', 'normal');
-        doc.line(14, y - 2, pageWidth - 14, y - 2);
-
-        user.submissions.slice(-20).forEach(sub => {
-            if (y > 275) { doc.addPage(); y = 20; }
-            const totalPoints = sub.grades.reduce((s, g) => s + g.points, 0);
-            const maxPoints = sub.grades.reduce((s, g) => s + g.criterion.maxPoints, 0);
-            doc.text(sub.assignment.title.substring(0, 30), 18, y);
-            doc.text(sub.assignment.difficulty || 'BASIC', 90, y);
-            doc.text(`${sub.assignment.xpReward}`, 125, y);
-            doc.text(maxPoints > 0 ? `${totalPoints}/${maxPoints}` : '—', 145, y);
-            doc.text(new Date(sub.createdAt).toLocaleDateString(), 170, y);
-            y += 5;
-        });
-
-        // --- Footer ---
-        doc.setFontSize(7);
-        doc.setTextColor(150);
-        doc.text(`Generated by BaqyLab • ${new Date().toISOString()}`, 14, 290);
-
-        // Return PDF
-        const pdfBuffer = doc.output('arraybuffer');
-        return new NextResponse(pdfBuffer, {
-            status: 200,
-            headers: {
-                'Content-Type': 'application/pdf',
-                'Content-Disposition': `attachment; filename="report-${user.name.replace(/\s/g, '_')}.pdf"`,
-            },
-        });
     } catch (error) {
         console.error('GET /api/profile/report error:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
+}
+
+// ======================== TEACHER PDF ========================
+
+async function generateTeacherPDF(user: any, userId: string) {
+    const ownedClasses = await prisma.class.findMany({
+        where: { teacherId: userId },
+        include: { members: true, lectures: true, assignments: true },
+    });
+
+    const totalStudents = ownedClasses.reduce((acc, c) => acc + c.members.length, 0);
+    const totalLectures = ownedClasses.reduce((acc, c) => acc + c.lectures.length, 0);
+    const totalAssignments = ownedClasses.reduce((acc, c) => acc + c.assignments.length, 0);
+
+    const classIds = ownedClasses.map(c => c.id);
+    const totalGraded = await prisma.submissionVersion.count({
+        where: {
+            assignment: { classId: { in: classIds } },
+            status: 'graded',
+        },
+    });
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let y = 20;
+
+    // --- Header ---
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text('BaqyLab', 14, y);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Teacher Report — ${new Date().toLocaleDateString()}`, pageWidth - 14, y, { align: 'right' });
+    y += 12;
+
+    // --- Teacher Info ---
+    doc.setDrawColor(16, 185, 129); // emerald
+    doc.setLineWidth(0.5);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 8;
+
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text(user.name, 14, y);
+    y += 7;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${user.email} | Role: Teacher`, 14, y);
+    y += 5;
+    doc.text(`Member since: ${new Date(user.createdAt).toLocaleDateString()}`, 14, y);
+    y += 12;
+
+    // --- Summary Stats ---
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Summary', 14, y);
+    y += 7;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+
+    const stats = [
+        { label: 'Total Classes', value: ownedClasses.length },
+        { label: 'Total Students', value: totalStudents },
+        { label: 'Total Lectures', value: totalLectures },
+        { label: 'Total Assignments', value: totalAssignments },
+        { label: 'Submissions Graded', value: totalGraded },
+    ];
+
+    stats.forEach(s => {
+        doc.text(`${s.label}: ${s.value}`, 18, y);
+        y += 6;
+    });
+    y += 4;
+
+    // --- Classes Detail ---
+    if (ownedClasses.length > 0) {
+        if (y > 240) { doc.addPage(); y = 20; }
+        doc.setFontSize(13);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Classes Overview', 14, y);
+        y += 7;
+
+        // Table header
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Class Name', 18, y);
+        doc.text('Students', 90, y);
+        doc.text('Lectures', 125, y);
+        doc.text('Assignments', 155, y);
+        y += 5;
+        doc.setFont('helvetica', 'normal');
+        doc.line(14, y - 2, pageWidth - 14, y - 2);
+
+        ownedClasses.forEach(cls => {
+            if (y > 275) { doc.addPage(); y = 20; }
+            doc.text(cls.name.substring(0, 30), 18, y);
+            doc.text(`${cls.members.length}`, 90, y);
+            doc.text(`${cls.lectures.length}`, 125, y);
+            doc.text(`${cls.assignments.length}`, 155, y);
+            y += 5;
+        });
+    }
+
+    // --- Footer ---
+    doc.setFontSize(7);
+    doc.setTextColor(150);
+    doc.text(`Generated by BaqyLab • ${new Date().toISOString()}`, 14, 290);
+
+    const pdfBuffer = doc.output('arraybuffer');
+    return new NextResponse(pdfBuffer, {
+        status: 200,
+        headers: {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename="report-${user.name.replace(/\s/g, '_')}.pdf"`,
+        },
+    });
+}
+
+// ======================== STUDENT PDF ========================
+
+async function generateStudentPDF(user: any, userId: string) {
+    const fullUser = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+            achievements: true,
+            userSkills: { include: { skill: true } },
+            submissions: {
+                where: { status: { not: 'draft' } },
+                include: {
+                    assignment: { select: { title: true, xpReward: true, difficulty: true } },
+                    grades: { include: { criterion: true } },
+                },
+                orderBy: { createdAt: 'asc' },
+            },
+            memberships: { include: { class: { select: { name: true } } } },
+        },
+    });
+
+    if (!fullUser) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let y = 20;
+
+    // --- Header ---
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text('BaqyLab', 14, y);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Student Report — ${new Date().toLocaleDateString()}`, pageWidth - 14, y, { align: 'right' });
+    y += 12;
+
+    // --- Student Info ---
+    doc.setDrawColor(99, 102, 241);
+    doc.setLineWidth(0.5);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 8;
+
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text(fullUser.name, 14, y);
+    y += 7;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${fullUser.email} | Level ${fullUser.level} | ${fullUser.xp} XP | Streak: ${fullUser.streakDays} days`, 14, y);
+    y += 5;
+    doc.text(`Academic Stability: ${Math.round((fullUser.academicStability || 1) * 100)}%`, 14, y);
+    y += 10;
+
+    // --- Classes ---
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Classes', 14, y);
+    y += 6;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    fullUser.memberships.forEach(m => {
+        doc.text(`• ${m.class.name}`, 18, y);
+        y += 5;
+    });
+    y += 4;
+
+    // --- Skills ---
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Skill Map', 14, y);
+    y += 6;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    if (fullUser.userSkills.length === 0) {
+        doc.text('No skills tracked yet.', 18, y);
+        y += 5;
+    } else {
+        fullUser.userSkills.forEach(us => {
+            const mastery = Math.min(100, (us as any).mastery || 0);
+            doc.text(`${us.skill.name}: ${mastery}%`, 18, y);
+            doc.setFillColor(229, 231, 235);
+            doc.rect(80, y - 3, 80, 4, 'F');
+            doc.setFillColor(99, 102, 241);
+            doc.rect(80, y - 3, 80 * (mastery / 100), 4, 'F');
+            y += 6;
+        });
+    }
+    y += 4;
+
+    // --- Badges ---
+    if (y > 240) { doc.addPage(); y = 20; }
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Achievements', 14, y);
+    y += 6;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    if (fullUser.achievements.length === 0) {
+        doc.text('No badges earned yet.', 18, y);
+        y += 5;
+    } else {
+        const badgeNames: Record<string, string> = {
+            first_code: '🚀 First Code',
+            five_assignments: '📚 5 Assignments',
+            streak_5: '🔥 5-Day Streak',
+            streak_10: '🔥 10-Day Streak',
+            streak_20: '🔥 20-Day Streak',
+            perfect_score: '⭐ Perfect Score',
+            fast_learner: '⚡ Fast Learner',
+            level_5: '🏆 Level 5',
+            level_10: '👑 Level 10',
+        };
+        fullUser.achievements.forEach(a => {
+            doc.text(`${badgeNames[a.badgeId] || a.badgeId} — ${new Date(a.earnedAt).toLocaleDateString()}`, 18, y);
+            y += 5;
+        });
+    }
+    y += 4;
+
+    // --- Submission History ---
+    if (y > 240) { doc.addPage(); y = 20; }
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Submission History', 14, y);
+    y += 6;
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+
+    doc.setFont('helvetica', 'bold');
+    doc.text('Assignment', 18, y);
+    doc.text('Difficulty', 90, y);
+    doc.text('XP', 125, y);
+    doc.text('Score', 145, y);
+    doc.text('Date', 170, y);
+    y += 5;
+    doc.setFont('helvetica', 'normal');
+    doc.line(14, y - 2, pageWidth - 14, y - 2);
+
+    fullUser.submissions.slice(-20).forEach(sub => {
+        if (y > 275) { doc.addPage(); y = 20; }
+        const totalPoints = sub.grades.reduce((s, g) => s + g.points, 0);
+        const maxPoints = sub.grades.reduce((s, g) => s + g.criterion.maxPoints, 0);
+        doc.text(sub.assignment.title.substring(0, 30), 18, y);
+        doc.text(sub.assignment.difficulty || 'BASIC', 90, y);
+        doc.text(`${sub.assignment.xpReward}`, 125, y);
+        doc.text(maxPoints > 0 ? `${totalPoints}/${maxPoints}` : '—', 145, y);
+        doc.text(new Date(sub.createdAt).toLocaleDateString(), 170, y);
+        y += 5;
+    });
+
+    // --- Footer ---
+    doc.setFontSize(7);
+    doc.setTextColor(150);
+    doc.text(`Generated by BaqyLab • ${new Date().toISOString()}`, 14, 290);
+
+    const pdfBuffer = doc.output('arraybuffer');
+    return new NextResponse(pdfBuffer, {
+        status: 200,
+        headers: {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename="report-${fullUser.name.replace(/\s/g, '_')}.pdf"`,
+        },
+    });
 }
