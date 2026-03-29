@@ -58,13 +58,15 @@ export default function DashboardPage() {
                 })
                 .catch(() => setLoading(false));
 
-            // Check if user has a pet
-            fetch('/api/pet')
-                .then((r) => r.json())
-                .then((data) => {
-                    if (!data.pet) setShowPetSetup(true);
-                })
-                .catch(() => {});
+            // Check if user has a pet (only for students)
+            if (role === 'STUDENT') {
+                fetch('/api/pet')
+                    .then((r) => r.json())
+                    .then((data) => {
+                        if (!data.pet) setShowPetSetup(true);
+                    })
+                    .catch(() => {});
+            }
         }
     }, [status]);
 

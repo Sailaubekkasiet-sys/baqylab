@@ -28,9 +28,9 @@ export function Sidebar() {
     const [petData, setPetData] = useState<any>(null);
     const [pendingCount, setPendingCount] = useState(0);
 
-    // Fetch pet data
+    // Fetch pet data (only for students)
     useEffect(() => {
-        if (!session) return;
+        if (!session || role !== 'STUDENT') return;
         fetch('/api/pet')
             .then((r) => r.json())
             .then((data) => {
@@ -38,7 +38,7 @@ export function Sidebar() {
                 if (data.pendingCount) setPendingCount(data.pendingCount);
             })
             .catch(() => {});
-    }, [session]);
+    }, [session, role]);
 
     // Random thought bubble
     const thought = useMemo(() => {

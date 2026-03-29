@@ -10,8 +10,13 @@ export async function GET() {
         if (!session?.user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+        
+        const userSession = session.user as any;
+        if (userSession.role !== 'STUDENT') {
+            return NextResponse.json({ pet: null });
+        }
 
-        const userId = (session.user as any).id;
+        const userId = userSession.id;
 
         const pet = await prisma.pet.findUnique({ where: { userId } });
         if (!pet) {
@@ -60,8 +65,13 @@ export async function POST(request: Request) {
         if (!session?.user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+        
+        const userSession = session.user as any;
+        if (userSession.role !== 'STUDENT') {
+            return NextResponse.json({ error: 'Only students can have pets' }, { status: 403 });
+        }
 
-        const userId = (session.user as any).id;
+        const userId = userSession.id;
 
         // Check if user already has a pet
         const existing = await prisma.pet.findUnique({ where: { userId } });
