@@ -22,6 +22,18 @@ const icons = {
     flame: <svg className="w-6 h-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" role="img" aria-label="Огонь стриксов (Дни подряд)"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" /></svg>,
 };
 
+const BADGE_MAP: Record<string, { emoji: string; color: string }> = {
+    first_code: { emoji: '🚀', color: '#3b82f6' },
+    streak_3: { emoji: '🔥', color: '#f97316' },
+    streak_5: { emoji: '🔥', color: '#ef4444' },
+    streak_7: { emoji: '💎', color: '#8b5cf6' },
+    level_5: { emoji: '⭐', color: '#f59e0b' },
+    level_10: { emoji: '🌟', color: '#eab308' },
+    perfect_score: { emoji: '💯', color: '#22c55e' },
+    first_review: { emoji: '👀', color: '#06b6d4' },
+    ten_submissions: { emoji: '📝', color: '#6366f1' },
+};
+
 interface ClassData {
     id: string;
     name: string;
@@ -168,14 +180,17 @@ export default function DashboardPage() {
                     <h2 className="text-lg font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
                         <svg className="w-5 h-5 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 0 1-.982-3.172M9.497 14.25a7.454 7.454 0 0 0 .981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 0 0 7.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 0 0 2.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 0 1 2.916.52 6.003 6.003 0 0 1-5.395 4.972m0 0a6.726 6.726 0 0 1-2.749 1.35m0 0a6.772 6.772 0 0 1-3.044 0" /></svg>{t('dash.achievements')}</h2>
                     <div className="flex flex-wrap gap-3">
-                        {achievements.map((ach) => (
-                            <div key={ach.id} className="group relative flex items-center justify-center p-3 rounded-full bg-brand-500/10 border border-brand-500/20 w-12 h-12 hover:bg-brand-500/20 transition-all cursor-default">
-                                {ach.badgeId === 'first_code' ? '🚀' : '🏆'}
-                                <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-black/80 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity">
-                                    {t(`badge.${ach.badgeId}` as any)}
+                        {achievements.map((ach) => {
+                            const badge = BADGE_MAP[ach.badgeId] || { emoji: '🏆', color: '#6366f1' };
+                            return (
+                                <div key={ach.id} className="group relative flex items-center justify-center p-3 rounded-full border transition-all cursor-default w-12 h-12 hover:brightness-110" style={{ backgroundColor: badge.color + '20', borderColor: badge.color + '40' }}>
+                                    {badge.emoji}
+                                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-black/90 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity z-10">
+                                        {t(`badge.${ach.badgeId}` as any)}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             )}
