@@ -304,7 +304,7 @@ export default function ProfileClient({ profile }: { profile: any }) {
                                                 {badge.emoji}
                                             </div>
                                             <div>
-                                                <p className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{ach.badgeId}</p>
+                                                <p className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{t(`badge.${ach.badgeId}` as any) || ach.badgeId}</p>
                                                 <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
                                                     {new Date(ach.earnedAt).toLocaleDateString()}
                                                 </p>

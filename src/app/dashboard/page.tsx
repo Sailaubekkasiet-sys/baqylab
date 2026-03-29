@@ -172,7 +172,7 @@ export default function DashboardPage() {
                             <div key={ach.id} className="group relative flex items-center justify-center p-3 rounded-full bg-brand-500/10 border border-brand-500/20 w-12 h-12 hover:bg-brand-500/20 transition-all cursor-default">
                                 {ach.badgeId === 'first_code' ? '🚀' : '🏆'}
                                 <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-black/80 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity">
-                                    {ach.badgeId}
+                                    {t(`badge.${ach.badgeId}` as any)}
                                 </div>
                             </div>
                         ))}
