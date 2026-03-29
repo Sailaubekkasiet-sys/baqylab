@@ -31,13 +31,22 @@ export function Sidebar() {
     // Fetch pet data (only for students)
     useEffect(() => {
         if (!session || role !== 'STUDENT') return;
-        fetch('/api/pet')
-            .then((r) => r.json())
-            .then((data) => {
-                if (data.pet) setPetData(data.pet);
-                if (data.pendingCount) setPendingCount(data.pendingCount);
-            })
-            .catch(() => {});
+
+        const fetchPet = () => {
+            fetch('/api/pet')
+                .then((r) => r.json())
+                .then((data) => {
+                    if (data.pet) setPetData(data.pet);
+                    if (data.pendingCount !== undefined) setPendingCount(data.pendingCount);
+                })
+                .catch(() => {});
+        };
+
+        fetchPet();
+
+        // Refetch immediately when pet is created
+        window.addEventListener('pet-created', fetchPet);
+        return () => window.removeEventListener('pet-created', fetchPet);
     }, [session, role]);
 
     // Random thought bubble

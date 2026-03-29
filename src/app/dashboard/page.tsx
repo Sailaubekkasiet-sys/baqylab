@@ -84,7 +84,11 @@ export default function DashboardPage() {
         <div className="space-y-8 animate-fade-in">
             {/* Pet Setup Modal */}
             {showPetSetup && (
-                <PetSetupModal onCreated={() => setShowPetSetup(false)} />
+                <PetSetupModal onCreated={() => {
+                    setShowPetSetup(false);
+                    // Notify Sidebar to fetch the new pet
+                    window.dispatchEvent(new Event('pet-created'));  
+                }} />
             )}
             {/* Welcome Header */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
