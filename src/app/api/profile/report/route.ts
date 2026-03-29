@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import jsPDF from 'jspdf';
+import { RobotoRegularBase64, RobotoBoldBase64 } from './fonts';
 
 // GET /api/profile/report — Generate PDF report for the authenticated user (teacher or student)
 export const dynamic = 'force-dynamic';
@@ -65,15 +66,19 @@ async function generateTeacherPDF(user: any, userId: string) {
     });
 
     const doc = new jsPDF();
+    doc.addFileToVFS('Roboto-Regular.ttf', RobotoRegularBase64);
+    doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
+    doc.addFileToVFS('Roboto-Medium.ttf', RobotoBoldBase64);
+    doc.addFont('Roboto-Medium.ttf', 'Roboto', 'bold');
     const pageWidth = doc.internal.pageSize.getWidth();
     let y = 20;
 
     // --- Header ---
     doc.setFontSize(22);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.text('BaqyLab', 14, y);
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.text(`Teacher Report — ${new Date().toLocaleDateString()}`, pageWidth - 14, y, { align: 'right' });
     y += 12;
 
@@ -84,11 +89,11 @@ async function generateTeacherPDF(user: any, userId: string) {
     y += 8;
 
     doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.text(user.name, 14, y);
     y += 7;
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.text(`${user.email} | Role: Teacher`, 14, y);
     y += 5;
     doc.text(`Member since: ${new Date(user.createdAt).toLocaleDateString()}`, 14, y);
@@ -96,11 +101,11 @@ async function generateTeacherPDF(user: any, userId: string) {
 
     // --- Summary Stats ---
     doc.setFontSize(13);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.text('Summary', 14, y);
     y += 7;
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
 
     const stats = [
         { label: 'Total Classes', value: ownedClasses.length },
@@ -120,19 +125,19 @@ async function generateTeacherPDF(user: any, userId: string) {
     if (ownedClasses.length > 0) {
         if (y > 240) { doc.addPage(); y = 20; }
         doc.setFontSize(13);
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('Roboto', 'bold');
         doc.text('Classes Overview', 14, y);
         y += 7;
 
         // Table header
         doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('Roboto', 'bold');
         doc.text('Class Name', 18, y);
         doc.text('Students', 90, y);
         doc.text('Lectures', 125, y);
         doc.text('Assignments', 155, y);
         y += 5;
-        doc.setFont('helvetica', 'normal');
+        doc.setFont('Roboto', 'normal');
         doc.line(14, y - 2, pageWidth - 14, y - 2);
 
         ownedClasses.forEach(cls => {
@@ -185,15 +190,19 @@ async function generateStudentPDF(user: any, userId: string) {
     }
 
     const doc = new jsPDF();
+    doc.addFileToVFS('Roboto-Regular.ttf', RobotoRegularBase64);
+    doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
+    doc.addFileToVFS('Roboto-Medium.ttf', RobotoBoldBase64);
+    doc.addFont('Roboto-Medium.ttf', 'Roboto', 'bold');
     const pageWidth = doc.internal.pageSize.getWidth();
     let y = 20;
 
     // --- Header ---
     doc.setFontSize(22);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.text('BaqyLab', 14, y);
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.text(`Student Report — ${new Date().toLocaleDateString()}`, pageWidth - 14, y, { align: 'right' });
     y += 12;
 
@@ -204,11 +213,11 @@ async function generateStudentPDF(user: any, userId: string) {
     y += 8;
 
     doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.text(fullUser.name, 14, y);
     y += 7;
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.text(`${fullUser.email} | Level ${fullUser.level} | ${fullUser.xp} XP | Streak: ${fullUser.streakDays} days`, 14, y);
     y += 5;
     doc.text(`Academic Stability: ${Math.round((fullUser.academicStability || 1) * 100)}%`, 14, y);
@@ -216,11 +225,11 @@ async function generateStudentPDF(user: any, userId: string) {
 
     // --- Classes ---
     doc.setFontSize(13);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.text('Classes', 14, y);
     y += 6;
     doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     fullUser.memberships.forEach(m => {
         doc.text(`• ${m.class.name}`, 18, y);
         y += 5;
@@ -229,11 +238,11 @@ async function generateStudentPDF(user: any, userId: string) {
 
     // --- Skills ---
     doc.setFontSize(13);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.text('Skill Map', 14, y);
     y += 6;
     doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     if (fullUser.userSkills.length === 0) {
         doc.text('No skills tracked yet.', 18, y);
         y += 5;
@@ -253,11 +262,11 @@ async function generateStudentPDF(user: any, userId: string) {
     // --- Badges ---
     if (y > 240) { doc.addPage(); y = 20; }
     doc.setFontSize(13);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.text('Achievements', 14, y);
     y += 6;
     doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     if (fullUser.achievements.length === 0) {
         doc.text('No badges earned yet.', 18, y);
         y += 5;
@@ -283,20 +292,20 @@ async function generateStudentPDF(user: any, userId: string) {
     // --- Submission History ---
     if (y > 240) { doc.addPage(); y = 20; }
     doc.setFontSize(13);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.text('Submission History', 14, y);
     y += 6;
     doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
 
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.text('Assignment', 18, y);
     doc.text('Difficulty', 90, y);
     doc.text('XP', 125, y);
     doc.text('Score', 145, y);
     doc.text('Date', 170, y);
     y += 5;
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.line(14, y - 2, pageWidth - 14, y - 2);
 
     fullUser.submissions.slice(-20).forEach(sub => {
