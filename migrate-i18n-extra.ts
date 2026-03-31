@@ -34,7 +34,7 @@ const keyMap: Record<string, string> = {
     'Создать задание': 'assign.create',
     'Добавить вариант': 'assign.addOption',
     'Добавить вопрос': 'assign.addQuestion',
-    'Конструктор рубрик': 'assign.rubricBuilder',
+    'Конструктор критериев': 'assign.rubricBuilder',
     'Всего': 'assign.totalPoints',
     'Баллы': 'assign.points',
     'Название критерия': 'assign.criterionName',
