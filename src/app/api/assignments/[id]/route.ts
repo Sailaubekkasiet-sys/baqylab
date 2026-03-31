@@ -34,57 +34,58 @@ export async function PUT(
             testCases, timeLimitMs, memoryLimitMb, difficulty, xpReward,
         } = body;
 
-        const assignment = await prisma.$transaction(async (tx) => {
-            // Delete existing relations
-            await tx.rubricCriterion.deleteMany({ where: { assignmentId: params.id } });
-            await tx.selfCheckItem.deleteMany({ where: { assignmentId: params.id } });
-            await tx.assignmentSkill.deleteMany({ where: { assignmentId: params.id } });
-
-            // Update assignment + re-create relations
-            return tx.assignment.update({
-                where: { id: params.id },
-                data: {
-                    title: title?.trim() ?? existing.title,
-                    description: description ?? existing.description,
-                    dueDate: dueDate !== undefined ? (dueDate ? new Date(dueDate) : null) : existing.dueDate,
-                    hardDeadline: hardDeadline !== undefined ? (hardDeadline ? new Date(hardDeadline) : null) : existing.hardDeadline,
-                    language: language ?? existing.language,
-                    type: type ?? existing.type,
-                    textPrompt: textPrompt ?? existing.textPrompt,
-                    quizData: quizData ?? existing.quizData,
-                    difficulty: difficulty ?? existing.difficulty,
-                    xpReward: xpReward !== undefined ? (parseInt(xpReward) || 100) : existing.xpReward,
-                    testCases: testCases !== undefined ? JSON.stringify(testCases) : existing.testCases,
-                    timeLimitMs: timeLimitMs ?? existing.timeLimitMs,
-                    memoryLimitMb: memoryLimitMb ?? existing.memoryLimitMb,
+        const assignment = await prisma.assignment.update({
+            where: { id: params.id },
+            data: {
+                title: title?.trim() ?? existing.title,
+                description: description ?? existing.description,
+                dueDate: dueDate !== undefined ? (dueDate ? new Date(dueDate) : null) : existing.dueDate,
+                hardDeadline: hardDeadline !== undefined ? (hardDeadline ? new Date(hardDeadline) : null) : existing.hardDeadline,
+                language: language ?? existing.language,
+                type: type ?? existing.type,
+                textPrompt: textPrompt ?? existing.textPrompt,
+                quizData: quizData ?? existing.quizData,
+                difficulty: difficulty ?? existing.difficulty,
+                xpReward: xpReward !== undefined ? (typeof xpReward === 'number' ? xpReward : (parseInt(xpReward) || 100)) : existing.xpReward,
+                testCases: testCases !== undefined ? JSON.stringify(testCases) : existing.testCases,
+                timeLimitMs: timeLimitMs ?? existing.timeLimitMs,
+                memoryLimitMb: memoryLimitMb ?? existing.memoryLimitMb,
+                ...(rubricCriteria !== undefined && {
                     rubricCriteria: {
-                        create: (rubricCriteria || []).map((c: any, i: number) => ({
+                        deleteMany: {},
+                        create: rubricCriteria.map((c: any, i: number) => ({
                             name: c.name,
                             description: c.description || '',
-                            maxPoints: c.maxPoints || 10,
+                            maxPoints: Number(c.maxPoints) || 10,
                             type: c.type || 'scale',
                             order: i,
                         })),
-                    },
+                    }
+                }),
+                ...(selfCheckItems !== undefined && {
                     selfCheckItems: {
-                        create: (selfCheckItems || []).map((s: any, i: number) => ({
+                        deleteMany: {},
+                        create: selfCheckItems.map((s: any, i: number) => ({
                             label: s.label,
                             required: s.required !== false,
                             order: i,
                         })),
-                    },
+                    }
+                }),
+                ...(skillIds !== undefined && {
                     skills: {
-                        create: (skillIds || []).map((sid: string) => ({
+                        deleteMany: {},
+                        create: skillIds.map((sid: string) => ({
                             skillId: sid,
                         })),
-                    },
-                },
-                include: {
-                    rubricCriteria: true,
-                    selfCheckItems: true,
-                    skills: { include: { skill: true } },
-                },
-            });
+                    }
+                }),
+            },
+            include: {
+                rubricCriteria: true,
+                selfCheckItems: true,
+                skills: { include: { skill: true } },
+            },
         });
 
         return NextResponse.json({ assignment });
