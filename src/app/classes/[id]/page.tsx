@@ -145,9 +145,6 @@ export default function ClassDetailPage() {
                             <Link key={l.id} href={`/classes/${id}/lectures/${l.id}`}>
                                 <Card hover padding="md">
                                     <CardTitle className="flex items-center gap-2"><div className="text-brand-500 w-5 h-5">{icons.lectures}</div> {l.title}</CardTitle>
-                                    <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
-                                        {t('class.createdAt')} {new Date(l.createdAt).toLocaleDateString('ru-RU')}
-                                    </p>
                                 </Card>
                             </Link>
                         ))
