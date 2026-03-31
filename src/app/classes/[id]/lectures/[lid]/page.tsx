@@ -70,7 +70,6 @@ export default function LectureDetailPage() {
             </div>
 
             <h1 className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>{lecture.title}</h1>
-            <p className="text-sm opacity-60">{t('class.createdAt')} {new Date(lecture.createdAt).toLocaleString()}</p>
 
             <Card padding="lg" className="prose dark:prose-invert max-w-none">
                 <div
