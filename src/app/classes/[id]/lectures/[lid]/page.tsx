@@ -18,6 +18,8 @@ export default function LectureDetailPage() {
     const [loading, setLoading] = useState(true);
     const [commentText, setCommentText] = useState('');
     const [replyingTo, setReplyingTo] = useState<string | null>(null);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deleting, setDeleting] = useState(false);
 
     useEffect(() => {
         fetch(`/api/lectures/${lectureId}`)
@@ -46,6 +48,21 @@ export default function LectureDetailPage() {
         setLoading(false);
     };
 
+    const handleDelete = async () => {
+        setDeleting(true);
+        try {
+            const res = await fetch(`/api/lectures/${lectureId}`, { method: 'DELETE' });
+            if (res.ok) {
+                router.push(`/classes/${classId}`);
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setDeleting(false);
+            setShowDeleteConfirm(false);
+        }
+    };
+
     if (loading && !lecture) return <div className="text-center py-20 animate-pulse-soft">{t('common.loading')}</div>;
     if (!lecture) return <div className="text-center py-20 opacity-50">{t('api.err.lectureNotFound')}</div>;
 
@@ -60,12 +77,25 @@ export default function LectureDetailPage() {
             <div className="flex justify-between items-start">
                 <Button variant="ghost" size="sm" onClick={() => router.push(`/classes/${classId}`)}>{t('class.backToClass')}</Button>
                 {isTeacherOrAdmin && (
-                    <Button variant="secondary" size="sm" onClick={() => router.push(`/classes/${classId}/lectures/${lectureId}/edit`)}>
-                        <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                        </svg>
-                        {t('lecture.edit')}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button variant="secondary" size="sm" onClick={() => router.push(`/classes/${classId}/lectures/${lectureId}/edit`)}>
+                            <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                            {t('lecture.edit')}
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowDeleteConfirm(true)}
+                            className="!text-red-500 hover:!bg-red-500/10"
+                        >
+                            <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            {t('lecture.delete')}
+                        </Button>
+                    </div>
                 )}
             </div>
 
@@ -175,6 +205,29 @@ export default function LectureDetailPage() {
                     )}
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
+                    <Card padding="lg" className="max-w-md w-full mx-4 space-y-4">
+                        <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{t('lecture.delete')}</h3>
+                        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{t('lecture.deleteConfirm')}</p>
+                        <div className="flex justify-end gap-2 pt-2">
+                            <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm(false)} disabled={deleting}>
+                                {t('common.cancel')}
+                            </Button>
+                            <Button
+                                size="sm"
+                                onClick={handleDelete}
+                                disabled={deleting}
+                                className="!bg-red-600 hover:!bg-red-700 !text-white"
+                            >
+                                {deleting ? t('common.loading') : t('lecture.delete')}
+                            </Button>
+                        </div>
+                    </Card>
+                </div>
+            )}
         </div>
     );
 }
