@@ -150,6 +150,145 @@
   .skill-expert {
     @apply text-brand-500;
   }
+
+  /* ── Lecture Content (Quill HTML output) ── */
+  .lecture-content h1 {
+    font-size: 2em;
+    font-weight: 700;
+    margin-top: 1.2em;
+    margin-bottom: 0.6em;
+    line-height: 1.25;
+    color: var(--text-primary);
+  }
+  .lecture-content h2 {
+    font-size: 1.5em;
+    font-weight: 600;
+    margin-top: 1.2em;
+    margin-bottom: 0.5em;
+    line-height: 1.3;
+    color: var(--text-primary);
+  }
+  .lecture-content h3 {
+    font-size: 1.25em;
+    font-weight: 600;
+    margin-top: 1em;
+    margin-bottom: 0.4em;
+    line-height: 1.35;
+    color: var(--text-primary);
+  }
+  .lecture-content p {
+    margin-bottom: 1em;
+    line-height: 1.75;
+  }
+  .lecture-content strong {
+    font-weight: 700;
+  }
+  .lecture-content em {
+    font-style: italic;
+  }
+  .lecture-content u {
+    text-decoration: underline;
+  }
+  .lecture-content s {
+    text-decoration: line-through;
+  }
+
+  /* Lists */
+  .lecture-content ol {
+    list-style-type: decimal;
+    padding-left: 1.5em;
+    margin-bottom: 1em;
+  }
+  .lecture-content ul {
+    list-style-type: disc;
+    padding-left: 1.5em;
+    margin-bottom: 1em;
+  }
+  .lecture-content li {
+    margin-bottom: 0.35em;
+    line-height: 1.7;
+  }
+  .lecture-content li > ol,
+  .lecture-content li > ul {
+    margin-top: 0.35em;
+    margin-bottom: 0;
+  }
+
+  /* Quill indent classes */
+  .lecture-content .ql-indent-1 { padding-left: 3em; }
+  .lecture-content .ql-indent-2 { padding-left: 6em; }
+  .lecture-content .ql-indent-3 { padding-left: 9em; }
+  .lecture-content .ql-indent-4 { padding-left: 12em; }
+  .lecture-content .ql-indent-5 { padding-left: 15em; }
+
+  /* Blockquote */
+  .lecture-content blockquote {
+    border-left: 4px solid var(--brand-500);
+    padding: 0.5em 1em;
+    margin: 1em 0;
+    color: var(--text-secondary);
+    font-style: italic;
+    background-color: var(--bg-secondary);
+    border-radius: 0 0.375rem 0.375rem 0;
+  }
+
+  /* Code block */
+  .lecture-content pre.ql-syntax,
+  .lecture-content pre {
+    background-color: #1e1e2e;
+    color: #cdd6f4;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin: 1em 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875em;
+    line-height: 1.6;
+  }
+  .lecture-content code {
+    background-color: var(--bg-tertiary);
+    padding: 0.15em 0.4em;
+    border-radius: 0.25rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875em;
+  }
+  .lecture-content pre code {
+    background-color: transparent;
+    padding: 0;
+    border-radius: 0;
+  }
+
+  /* Links */
+  .lecture-content a {
+    color: var(--brand-500);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color 0.15s ease;
+  }
+  .lecture-content a:hover {
+    color: var(--brand-700);
+  }
+
+  /* Images & videos */
+  .lecture-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    margin: 1em 0;
+  }
+  .lecture-content iframe {
+    max-width: 100%;
+    border-radius: 0.5rem;
+    margin: 1em 0;
+  }
+
+  /* Remove top margin from first child, bottom from last */
+  .lecture-content > *:first-child {
+    margin-top: 0;
+  }
+  .lecture-content > *:last-child {
+    margin-bottom: 0;
+  }
 }
 
 @layer utilities {

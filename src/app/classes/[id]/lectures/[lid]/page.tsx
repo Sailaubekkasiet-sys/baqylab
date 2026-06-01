@@ -71,9 +71,9 @@ export default function LectureDetailPage() {
 
             <h1 className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>{lecture.title}</h1>
 
-            <Card padding="lg" className="prose dark:prose-invert max-w-none">
+            <Card padding="lg" className="max-w-none">
                 <div
-                    className="font-sans text-sm md:text-base leading-relaxed"
+                    className="lecture-content font-sans text-base leading-relaxed"
                     style={{ color: 'var(--text-primary)' }}
                     dangerouslySetInnerHTML={{ __html: lecture.content }}
                 />
